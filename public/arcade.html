@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apple Shooting Game - 80s Arcade Edition</title>
+    <style>
+        @font-face {
+            font-family: 'Arcade';
+            src: url('https://fonts.gstatic.com/s/pressstart2p/v14/e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2') format('woff2');
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arcade', 'Courier New', monospace;
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 800px;
+            margin: 20px auto;
+        }
+        
+        canvas {
+            border: 4px solid #ff00ff;
+            border-radius: 10px;
+            background-color: #000033;
+            box-shadow: 0 0 20px #00ffff;
+        }
+        
+        #game-ui {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            color: #00ffff;
+            text-shadow: 0 0 5px #00ffff;
+        }
+        
+        #score-container {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        #score {
+            color: #ffff00;
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border: 4px solid #ff00ff;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            color: #00ffff;
+            box-shadow: 0 0 20px #ff00ff;
+        }
+        
+        #game-over h2 {
+            color: #ff0000;
+            text-shadow: 0 0 10px #ff0000;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background-color: #ff00ff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: 'Arcade', 'Courier New', monospace;
+            box-shadow: 0 0 10px #ff00ff;
+            margin-top: 20px;
+        }
+        
+        button:hover {
+            background-color: #ff66ff;
+            transform: scale(1.05);
+        }
+        
+        #arrows-display, #apples-display {
+            position: absolute;
+            width: 60px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        
+        #arrows-display {
+            left: -70px;
+        }
+        
+        #apples-display {
+            right: -70px;
+        }
+        
+        .arrow-icon, .apple-icon {
+            width: 40px;
+            height: 10px;
+            margin: 2px 0;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        
+        .arrow-icon {
+            background-color: #ffcc00;
+            clip-path: polygon(0% 30%, 70% 30%, 70% 0%, 100% 50%, 70% 100%, 70% 70%, 0% 70%);
+        }
+        
+        .apple-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #ff0000;
+            position: relative;
+        }
+        
+        .apple-icon::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 8px;
+            width: 4px;
+            height: 7px;
+            background-color: #8B4513;
+            border-radius: 2px;
+        }
+        
+        .apple-icon::after {
+            content: '';
+            position: absolute;
+            top: -3px;
+            right: 5px;
+            width: 6px;
+            height: 4px;
+            background-color: #00cc00;
+            border-radius: 50%;
+            transform: rotate(30deg);
+        }
+        
+        #score-popup {
+            position: absolute;
+            font-size: 24px;
+            color: #ffff00;
+            text-shadow: 0 0 5px #ffff00;
+            pointer-events: none;
+            z-index: 100;
+            font-family: 'Arcade', 'Courier New', monospace;
+        }
+        
+ 
+        #debug-panel {
+            display: none !important;
+        }
+   
+
+</style>
+</head>
+<body>
+    <h1 style="color: #00ffff; text-shadow: 0 0 10px #00ffff;">Forest Spirit's Arrow Quest</h1>
+    <h2 style="color: #ff00ff; text-shadow: 0 0 10px #ff00ff; margin-top: -10px;">80s Arcade Edition</h2>
+    
+    <div id="game-container">
+        <div id="game-ui">
+            <div id="score-container">
+                SCORE: <span id="score">0</span>
+            </div>
+            <div id="difficulty-container">
+                DIFFICULTY: 
+                <input type="range" id="difficulty" min="1" max="10" value="5">
+                <span id="difficulty-value">5</span>
+            </div>
+        </div>
+        
+        <div id="arrows-display"></div>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="apples-display"></div>
+        
+        <div id="game-over">
+            <h2>GAME OVER</h2>
+            <p>YOUR SCORE: <span id="final-score">0</span></p>
+            <button id="restart-button">PLAY AGAIN</button>
+        </div>
+        
+        <!-- Debug panel -->
+        <div id="debug-panel">
+            <div>FPS: <span id="fps">0</span></div> 
+            <div>Objects: <span id="object-count">0</span></div> 
+            <div>Memory: <span id="memory-usage">0</span> MB</div> 
+            <div>Last Error: <span id="last-error">None</span></div> 
+            <button id="toggle-audio">Toggle Audio</button>
+        </div>
+    </div>
+
+    <script>
+        // Debug variables
+        let fpsValues = [];
+        let lastFrameTime = 0;
+        let audioEnabled = true;
+        let lastError = "None";
+        let frameCount = 0;
+        let lastFpsUpdate = 0;
+        
+        // Sound effects with error handling
+        const sounds = {};
+        
+        // Preload audio with fallbacks
+        function preloadAudio() {
+            const audioFiles = {
+                arrowShoot: 'sounds/arrow_shoot.mp3',
+                fruitHit: 'sounds/fruit_hit.mp3',
+                explosion: 'sounds/explosion.mp3',
+                gameOver: 'sounds/game_over.mp3',
+                backgroundMusic: 'sounds/background_music.mp3',
+                score: 'sounds/score.mp3'
+            };
+            
+            // Create dummy audio for fallback
+            const dummyAudio = {
+                play: function() { return Promise.resolve(); },
+                pause: function() {},
+                currentTime: 0,
+                loop: false,
+                volume: 1
+            };
+            
+            // Try to load each sound, use dummy if fails
+            for (const [key, path] of Object.entries(audioFiles)) {
+                try {
+                    const audio = new Audio();
+                    
+                    // Add error handling
+                    audio.onerror = function() {
+                        console.log(`Failed to load audio: ${path}`);
+                        sounds[key] = dummyAudio;
+                        updateDebugPanel(`Audio load failed: ${key}`);
+                    };
+                    
+                    // Set source after adding error handler
+                    audio.src = path;
+                    sounds[key] = audio;
+                    
+                    // Attempt to load
+                    audio.load();
+                } catch (e) {
+                    console.log(`Error creating audio: ${e.message}`);
+                    sounds[key] = dummyAudio;
+                    updateDebugPanel(`Audio creation failed: ${key}`);
+                }
+            }
+            
+            // Set up background music
+            if (sounds.backgroundMusic !== dummyAudio) {
+                sounds.backgroundMusic.loop = true;
+                sounds.backgroundMusic.volume = 0.5;
+            }
+        }
+        
+        // Safe audio play function
+        function playSound(soundName) {
+            if (!audioEnabled || !sounds[soundName]) return Promise.resolve();
+            
+            try {
+                sounds[soundName].currentTime = 0;
+                return sounds[soundName].play().catch(e => {
+                    console.log(`Audio play failed: ${e.message}`);
+                    updateDebugPanel(`Audio play failed: ${soundName}`);
+                    return Promise.resolve();
+                });
+            } catch (e) {
+                console.log(`Error playing sound: ${e.message}`);
+                updateDebugPanel(`Audio error: ${soundName}`);
+                return Promise.resolve();
+            }
+        }
+        
+        // Update debug panel
+        function updateDebugPanel(error = null) {
+            if (error) {
+                lastError = error;
+                document.getElementById('last-error').textContent = error;
+            }
+            
+            // Update object count
+            const objectCount = arrows.length + fruits.length + bombs.length + 
+                               particles.length + scorePopups.length;
+            document.getElementById('object-count').textContent = objectCount;
+            
+            // Estimate memory usage (very rough approximation)
+            const memoryEstimate = Math.round(objectCount * 0.1);
+            document.getElementById('memory-usage').textContent = memoryEstimate;
+        }
+        
+        // Calculate and update FPS
+        function updateFPS(timestamp) {
+            if (!lastFrameTime) {
+                lastFrameTime = timestamp;
+                return;
+            }
+            
+            const deltaTime = timestamp - lastFrameTime;
+            lastFrameTime = timestamp;
+            
+            if (deltaTime > 0) {
+                const fps = 1000 / deltaTime;
+                fpsValues.push(fps);
+                
+                // Keep only last 60 values
+                if (fpsValues.length > 60) {
+                    fpsValues.shift();
+                }
+                
+                // Update FPS display every 500ms
+                frameCount++;
+                if (timestamp - lastFpsUpdate > 500) {
+                    const avgFps = Math.round(
+                        fpsValues.reduce((sum, value) => sum + value, 0) / fpsValues.length
+                    );
+                    document.getElementById('fps').textContent = avgFps;
+                    lastFpsUpdate = timestamp;
+                    frameCount = 0;
+                }
+            }
+        }
+        
+        // Game variables
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const arrowsDisplay = document.getElementById('arrows-display');
+        const applesDisplay = document.getElementById('apples-display');
+        
+        // music
+canvas.addEventListener('click', () => {
+    if (audioEnabled && sounds.backgroundMusic && sounds.backgroundMusic.paused) {
+        sounds.backgroundMusic.play();
+    }
+}, { once: true });
+
+// Game state
+        let score = 0;
+        let arrowsLeft = 20;
+        let applesDropped = 0;
+        let gameOver = false;
+        let difficulty = 5;
+        let fruitSpawnRate = 0.02;
+        let fruitSpeed = 2;
+        let landscapeSpeed = 1;
+        let hitCombo = 0;
+        let lastHitTime = 0;
+        let comboTimeout = 2000; // 2 seconds to maintain combo
+        let spearApples = []; // Apples that have been speared
+        
+        // Game objects
+        let archer = {
+            x: 50,
+            y: canvas.height / 2,
+            size: 40,
+            update: function() {
+                // Follow mouse Y position
+                this.y = mouseY;
+                if (this.y < this.size/2) this.y = this.size/2;
+                if (this.y > canvas.height - this.size/2) this.y = canvas.height - this.size/2;
+            },
+            draw: function() {
+                // Draw cartoon archer body
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                // Draw body
+                ctx.fillStyle = '#8B4513'; // Brown
+                ctx.fillRect(-5, -20, 10, 40); // Torso
+                
+                // Draw head
+                ctx.fillStyle = '#FFA07A'; // Light salmon
+                ctx.beginPath();
+                ctx.arc(0, -30, 15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw eyes
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(5, -33, 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(5, -33, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw hat
+                ctx.fillStyle = '#228B22'; // Forest green
+                ctx.beginPath();
+                ctx.moveTo(-15, -35);
+                ctx.lineTo(15, -35);
+                ctx.lineTo(0, -55);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Draw arms
+                ctx.fillStyle = '#FFA07A'; // Light salmon
+                ctx.fillRect(5, -15, 20, 8); // Right arm
+                
+                // Draw bow
+                ctx.strokeStyle = '#8B4513'; // Brown
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(25, -10, 20, -Math.PI/2.5, Math.PI/2.5);
+                ctx.stroke();
+                
+                // Draw bowstring
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(25 + Math.cos(-Math.PI/2.5) * 20, -10 + Math.sin(-Math.PI/2.5) * 20);
+                ctx.lineTo(25 + Math.cos(Math.PI/2.5) * 20, -10 + Math.sin(Math.PI/2.5) * 20);
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+        };
+        
+        let arrows = [];
+        let fruits = [];
+        let bombs = [];
+        let particles = [];
+        let scorePopups = [];
+        
+        // Background elements
+        let clouds = [];
+        let mountains = [];
+        let trees = [];
+        let wavePoints = [];
+        let stars = [];
+        
+        // Mouse position
+        let mouseX = 0;
+        let mouseY = canvas.height / 2;
+        
+        // Initialize game
+        function init() {
+            try {
+                // Reset game state
+                score = 0;
+                arrowsLeft = 20;
+                applesDropped = 0;
+                gameOver = false;
+                hitCombo = 0;
+                lastHitTime = 0;
+                arrows = [];
+                fruits = [];
+                bombs = [];
+                particles = [];
+                scorePopups = [];
+                spearApples = [];
+                
+                // Initialize background elements
+                initBackground();
+                
+                // Update UI
+                updateScoreDisplay();
+                updateArrowsDisplay();
+                updateApplesDisplay();
+                
+                // Play background music
+                playSound('backgroundMusic');
+                
+                // Start game loop
+                if (!gameLoopRunning) {
+                    gameLoopRunning = true;
+                    requestAnimationFrame(gameLoop);
+                }
+                
+                updateDebugPanel();
+            } catch (e) {
+                console.error("Initialization error:", e);
+                updateDebugPanel(`Init error: ${e.message}`);
+            }
+        }
+        
+        function initBackground() {
+            // Initialize stars
+            stars = [];
+            for (let i = 0; i < 100; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height * 0.7,
+                    size: Math.random() * 2 + 1,
+                    twinkle: Math.random() * 0.1,
+                    twinkleSpeed: 0.05 + Math.random() * 0.05
+                });
+            }
+            
+            // Initialize clouds
+            clouds = [];
+            for (let i = 0; i < 5; i++) {
+                clouds.push({
+                    x: Math.random() * canvas.width,
+                    y: 50 + Math.random() * 100,
+                    width: 50 + Math.random() * 50,
+                    height: 30 + Math.random() * 20,
+                    speed: 0.5 + Math.random() * 0.5
+                });
+            }
+            
+            // Initialize mountains
+            mountains = [];
+            for (let i = 0; i < 3; i++) {
+                mountains.push({
+                    x: i * canvas.width/3 + (Math.random() * 100 - 50),
+                    y: canvas.height * 0.5,
+                    width: 150 + Math.random() * 100,
+                    height: 100 + Math.random() * 100,
+                    speed: 0.3
+                });
+            }
+            
+            // Initialize trees
+            trees = [];
+            for (let i = 0; i < 15; i++) {
+                trees.push({
+                    x: Math.random() * canvas.width,
+                    y: canvas.height * 0.5 + Math.random() * (canvas.height * 0.2),
+                    size: 30 + Math.random() * 50,
+                    speed: 0.7
+                });
+            }
+            
+            // Initialize wave points
+            wavePoints = [];
+            const numPoints = 20;
+            for (let i = 0; i <= numPoints; i++) {
+                wavePoints.push({
+                    x: (canvas.width / numPoints) * i,
+                    y: canvas.height * 0.75,
+                    angle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+        
+        // Game loop
+        let lastTime = 0;
+        let gameLoopRunning = false;
+        
+        function gameLoop(timestamp) {
+            try {
+                // Update FPS counter
+                updateFPS(timestamp);
+                
+                if (!lastTime) lastTime = timestamp;
+                const deltaTime = (timestamp - lastTime) / 1000;
+                lastTime = timestamp;
+                
+                // Clear canvas
+                ctx.fillStyle = '#000033'; // Dark blue background
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw background
+                drawBackground();
+                
+                if (!gameOver) {
+                    // Update and draw game objects
+                    updateGame(deltaTime);
+                    
+                    // Spawn new fruits and bombs with rate limiting
+                    if (Math.random() < fruitSpawnRate * deltaTime * 60 && fruits.length + bombs.length < 10) {
+                        spawnFruitOrBomb();
+                    }
+                    
+                    // Check combo timeout
+                    if (hitCombo > 0 && timestamp - lastHitTime > comboTimeout) {
+                        hitCombo = 0;
+                    }
+                }
+                
+                // Draw particles with limit
+                const maxParticlesToProcess = 100; // Limit processing to prevent stalls
+                const particlesToProcess = Math.min(particles.length, maxParticlesToProcess);
+                
+                for (let i = particlesToProcess - 1; i >= 0; i--) {
+                    particles[i].update();
+                    particles[i].draw();
+                    
+                    if (particles[i].alpha <= 0) {
+                        particles.splice(i, 1);
+                    }
+                }
+                
+                // Draw score popups
+                for (let i = scorePopups.length - 1; i >= 0; i--) {
+                    scorePopups[i].update();
+                    scorePopups[i].draw();
+                    
+                    if (scorePopups[i].alpha <= 0) {
+                        scorePopups.splice(i, 1);
+                    }
+                }
+                
+                // Update debug panel periodically
+                if (frameCount % 30 === 0) {
+                    updateDebugPanel();
+                }
+                
+                // Request next frame with error handling
+                gameLoopRunning = true;
+                requestAnimationFrame(gameLoop);
+            } catch (e) {
+                console.error("Game loop error:", e);
+                updateDebugPanel(`Loop error: ${e.message}`);
+                
+                // Try to recover
+                gameLoopRunning = false;
+                setTimeout(() => {
+                    if (!gameLoopRunning) {
+                        gameLoopRunning = true;
+                        requestAnimationFrame(gameLoop);
+                    }
+                }, 1000);
+            }
+        }
+        
+        function updateGame(deltaTime) {
+            // Update archer
+            archer.update();
+            archer.draw();
+            
+            // Update arrows
+            for (let i = arrows.length - 1; i >= 0; i--) {
+                arrows[i].update();
+                arrows[i].draw();
+                
+                // Remove arrows that are off-screen
+                if (arrows[i].x > canvas.width) {
+                    arrows.splice(i, 1);
+                }
+            }
+            
+            // Update fruits
+            for (let i = fruits.length - 1; i >= 0; i--) {
+                fruits[i].update();
+                fruits[i].draw();
+                
+                // Check for collision with arrows
+                for (let j = arrows.length - 1; j >= 0; j--) {
+                    if (!fruits[i].attachedArrow && checkCollision(arrows[j], fruits[i])) {
+                        // Fruit hit by arrow
+                        fruits[i].attachToArrow(arrows[j]);
+                        
+                        // Play fruit hit sound
+                        playSound('fruitHit');
+                        
+                        // Update combo
+                        hitCombo++;
+                        lastHitTime = performance.now();
+                        
+                        // Calculate score based on height, fruit type, and combo
+                        let heightBonus = (canvas.height - fruits[i].y) / canvas.height * 2 + 1;
+                        let comboMultiplier = 1 + (hitCombo - 1) * 0.5; // 1x, 1.5x, 2x, 2.5x, etc.
+                        let scoreValue = fruits[i].points * heightBonus * comboMultiplier;
+                        
+                        // Add floating score text
+                        addScorePopup(fruits[i].x, fruits[i].y, Math.floor(scoreValue), hitCombo);
+                        
+                        // Play score sound
+                        playSound('score');
+                        
+                        // Update score
+                        score += Math.floor(scoreValue);
+                        updateScoreDisplay();
+                        
+                        // Add to speared apples
+                        spearApples.push({
+                            type: fruits[i].type,
+                            color: fruits[i].color
+                        });
+                        updateApplesDisplay();
+                        
+                        break;
+                    }
+                }
+                
+                // Remove fruits that have fallen off-screen
+                if (fruits[i].y > canvas.height && !fruits[i].attachedArrow) {
+                    // Count dropped apple
+                    applesDropped++;
+                    updateApplesDisplay(); // Fixed function name
+                    
+                    // Check if game over
+                    if (applesDropped >= 20) {
+                        endGame();
+                    }
+                    
+                    fruits.splice(i, 1);
+                }
+            }
+            
+            // Update bombs
+            for (let i = bombs.length - 1; i >= 0; i--) {
+                bombs[i].update();
+                bombs[i].draw();
+                
+                // Check for collision with arrows
+                for (let j = arrows.length - 1; j >= 0; j--) {
+                    if (checkCollision(arrows[j], bombs[i])) {
+                        // Bomb hit by arrow - game over!
+                        createExplosion(bombs[i].x, bombs[i].y);
+                        
+                        // Play explosion sound
+                        playSound('explosion');
+                        
+                        bombs.splice(i, 1);
+                        arrows.splice(j, 1);
+                        
+                        // End game
+                        endGame();
+                        
+                        break;
+                    }
+                }
+                
+                // Remove bombs that have fallen off-screen
+                if (i >= 0 && bombs[i].y > canvas.height) {
+                    bombs.splice(i, 1);
+                }
+            }
+        }
+        
+        function drawBackground() {
+            // Draw stars
+            for (let star of stars) {
+                star.twinkle += star.twinkleSpeed;
+                if (star.twinkle > 1) star.twinkleSpeed = -Math.abs(star.twinkleSpeed);
+                if (star.twinkle < 0) star.twinkleSpeed = Math.abs(star.twinkleSpeed);
+                
+                const brightness = 0.5 + star.twinkle * 0.5;
+                ctx.fillStyle = `rgba(255, 255, 255, ${brightness})`;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Draw clouds
+            ctx.fillStyle = 'rgba(150, 150, 255, 0.5)';
+            for (let cloud of clouds) {
+                // Update cloud position
+                cloud.x -= cloud.speed * landscapeSpeed;
+                if (cloud.x + cloud.width < 0) {
+                    cloud.x = canvas.width + Math.random() * 50;
+                    cloud.y = 50 + Math.random() * 100;
+                    cloud.width = 50 + Math.random() * 50;
+                    cloud.height = 30 + Math.random() * 20;
+                }
+                
+                // Draw cloud
+                ctx.beginPath();
+                ctx.ellipse(cloud.x, cloud.y, cloud.width/2, cloud.height/2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(cloud.x + cloud.width * 0.2, cloud.y - cloud.height * 0.1, cloud.width * 0.4, cloud.height * 0.4, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(cloud.x - cloud.width * 0.2, cloud.y + cloud.height * 0.1, cloud.width * 0.3, cloud.height * 0.3, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Draw mountains
+            for (let mountain of mountains) {
+                // Update mountain position
+                mountain.x -= mountain.speed * landscapeSpeed;
+                if (mountain.x + mountain.width < 0) {
+                    mountain.x = canvas.width + Math.random() * 50;
+                    mountain.width = 150 + Math.random() * 100;
+                    mountain.height = 100 + Math.random() * 100;
+                }
+                
+                // Draw mountain with neon outline
+                ctx.fillStyle = '#9470B1'; // Purple mountains
+                ctx.strokeStyle = '#ff00ff'; // Neon pink outline
+                ctx.lineWidth = 2;
+                
+                ctx.beginPath();
+                ctx.moveTo(mountain.x, mountain.y);
+                ctx.lineTo(mountain.x + mountain.width/2, mountain.y - mountain.height);
+                ctx.lineTo(mountain.x + mountain.width, mountain.y);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                
+                // Draw snow cap with neon glow
+                ctx.fillStyle = '#ffffff';
+                ctx.shadowColor = '#00ffff';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.moveTo(mountain.x + mountain.width * 0.3, mountain.y - mountain.height * 0.5);
+                ctx.lineTo(mountain.x + mountain.width/2, mountain.y - mountain.height);
+                ctx.lineTo(mountain.x + mountain.width * 0.7, mountain.y - mountain.height * 0.5);
+                ctx.closePath();
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+            
+            // Draw water
+            drawWater();
+            
+            // Draw trees
+            for (let tree of trees) {
+                // Update tree position
+                tree.x -= tree.speed * landscapeSpeed;
+                if (tree.x + tree.size < 0) {
+                    tree.x = canvas.width + Math.random() * 30;
+                    tree.y = canvas.height * 0.5 + Math.random() * (canvas.height * 0.2);
+                    tree.size = 30 + Math.random() * 50;
+                }
+                
+                // Draw tree trunk
+                ctx.fillStyle = '#8B4513'; // Brown
+                ctx.fillRect(tree.x - tree.size * 0.05, tree.y - tree.size * 0.2, tree.size * 0.1, tree.size * 0.3);
+                
+                // Draw tree foliage with neon outline
+                ctx.fillStyle = '#228B22'; // Forest green
+                ctx.strokeStyle = '#00ff00'; // Neon green
+                ctx.lineWidth = 1;
+                
+                ctx.beginPath();
+                ctx.ellipse(tree.x, tree.y - tree.size * 0.3, tree.size * 0.4, tree.size * 0.3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+        
+        function drawWater() {
+            // Update wave points
+            for (let i = 0; i < wavePoints.length; i++) {
+                wavePoints[i].angle += 0.03;
+                wavePoints[i].y = canvas.height * 0.75 + Math.sin(wavePoints[i].angle) * 5;
+            }
+            
+            // Draw water with neon effect
+            const gradient = ctx.createLinearGradient(0, canvas.height * 0.75, 0, canvas.height);
+            gradient.addColorStop(0, 'rgba(0, 100, 255, 0.7)');
+            gradient.addColorStop(1, 'rgba(0, 50, 150, 0.7)');
+            
+            ctx.fillStyle = gradient;
+            ctx.strokeStyle = '#00ffff'; // Neon cyan
+            ctx.lineWidth = 2;
+            
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height);
+            ctx.lineTo(0, canvas.height * 0.75);
+            
+            // Draw curved water surface using wave points
+            for (let point of wavePoints) {
+                ctx.lineTo(point.x, point.y);
+            }
+            
+            ctx.lineTo(canvas.width, canvas.height * 0.75);
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Draw water surface line with glow
+            ctx.shadowColor = '#00ffff';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height * 0.75);
+            for (let point of wavePoints) {
+                ctx.lineTo(point.x, point.y);
+            }
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            
+            // Draw water reflections
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            for (let i = 0; i < 10; i++) {
+                let x = Math.random() * canvas.width;
+                let y = canvas.height * 0.8 + Math.random() * (canvas.height * 0.15);
+                let size = 2 + Math.random() * 5;
+                
+                ctx.beginPath();
+                ctx.ellipse(x, y, size, size/2, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Create game objects
+        function createArrow(x, y) {
+            // Play arrow shoot sound
+            playSound('arrowShoot');
+            
+            return {
+                x: x,
+                y: y,
+                width: 40,
+                height: 5,
+                speed: 10,
+                fruits: [],
+                update: function() {
+                    this.x += this.speed;
+                    
+                    // Update attached fruits
+                    for (let fruit of this.fruits) {
+                        fruit.x = this.x;
+                        fruit.y = this.y;
+                    }
+                },
+                draw: function() {
+                    // Draw arrow shaft with neon effect
+                    ctx.strokeStyle = '#ffcc00'; // Yellow
+                    ctx.shadowColor = '#ffcc00';
+                    ctx.shadowBlur = 5;
+                    ctx.lineWidth = this.height;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x - this.width/2, this.y);
+                    ctx.lineTo(this.x + this.width/2, this.y);
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                    
+                    // Draw arrow head
+                    ctx.fillStyle = '#ffcc00';
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width/2, this.y);
+                    ctx.lineTo(this.x + this.width/2 - 10, this.y - 10);
+                    ctx.lineTo(this.x + this.width/2 - 10, this.y + 10);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Draw arrow feathers
+                    ctx.fillStyle = '#ff3333';
+                    ctx.beginPath();
+                    ctx.ellipse(this.x - this.width/2 + 5, this.y - 8, 5, 2.5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.ellipse(this.x - this.width/2 + 5, this.y + 8, 5, 2.5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Draw trail effect
+                    for (let i = 1; i <= 5; i++) {
+                        ctx.strokeStyle = `rgba(255, 204, 0, ${0.2 - i * 0.03})`;
+                        ctx.lineWidth = this.height - i * 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(this.x - this.width/2 - i * 8, this.y);
+                        ctx.lineTo(this.x - this.width/2, this.y);
+                        ctx.stroke();
+                    }
+                }
+            };
+        }
+        
+        function createFruit(x, y, type = "apple") {
+            let size = type === "special" ? 40 : 30;
+            let color, points;
+            
+            // Set color and points based on type
+            if (type === "apple") {
+                color = '#ff3333';
+                points = 10;
+            } else if (type === "pear") {
+                color = '#B4D455'; // Yellow-green
+                points = 20;
+            } else if (type === "special") {
+                color = '#ffdd00';
+                points = 50;
+            }
+            
+            return {
+                x: x,
+                y: y,
+                size: size,
+                type: type,
+                color: color,
+                points: points,
+                speed: (1 + Math.random() * 2) * fruitSpeed,
+                angle: Math.random() * Math.PI * 2,
+                rotationSpeed: (Math.random() * 0.08 + 0.02) * (Math.random() > 0.5 ? 1 : -1),
+                attachedArrow: null,
+                update: function() {
+                    if (!this.attachedArrow) {
+                        this.y += this.speed;
+                        this.angle += this.rotationSpeed;
+                    }
+                },
+                draw: function() {
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.angle);
+                    
+                    // Draw fruit with neon glow
+                    ctx.fillStyle = this.color;
+                    ctx.shadowColor = this.color;
+                    ctx.shadowBlur = 10;
+                    
+                    if (this.type === "apple") {
+                        // Draw apple
+                        ctx.beginPath();
+                        ctx.arc(0, 0, this.size/2, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Draw stem
+                        ctx.shadowBlur = 0;
+                        ctx.strokeStyle = '#8B4513';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(0, -this.size/2);
+                        ctx.lineTo(0, -this.size/2 - 8);
+                        ctx.stroke();
+                        
+                        // Draw leaf
+                        ctx.fillStyle = '#00cc00';
+                        ctx.beginPath();
+                        ctx.ellipse(4, -this.size/2 - 4, 4, 2.5, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (this.type === "pear") {
+                        // Draw pear shape
+                        ctx.beginPath();
+                        ctx.ellipse(0, 0, this.size * 0.4, this.size * 0.55, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.beginPath();
+                        ctx.ellipse(0, -this.size * 0.4, this.size * 0.25, this.size * 0.2, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Draw stem
+                        ctx.shadowBlur = 0;
+                        ctx.strokeStyle = '#8B4513';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(0, -this.size * 0.6);
+                        ctx.lineTo(0, -this.size * 0.6 - 6);
+                        ctx.stroke();
+                    } else if (this.type === "special") {
+                        // Draw star shape
+                        ctx.beginPath();
+                        const spikes = 5;
+                        const outerRadius = this.size / 2;
+                        const innerRadius = this.size / 4;
+                        
+                        for (let i = 0; i < spikes * 2; i++) {
+                            const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                            const angle = (Math.PI * 2 * i) / (spikes * 2);
+                            const x = Math.cos(angle) * radius;
+                            const y = Math.sin(angle) * radius;
+                            
+                            if (i === 0) {
+                                ctx.moveTo(x, y);
+                            } else {
+                                ctx.lineTo(x, y);
+                            }
+                        }
+                        
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        // Add sparkle
+                        ctx.shadowBlur = 0;
+                        if (Math.random() > 0.5) {
+                            ctx.fillStyle = 'white';
+                            const sparkleAngle = Math.random() * Math.PI * 2;
+                            const sparkleRadius = Math.random() * (outerRadius * 0.7);
+                            ctx.beginPath();
+                            ctx.arc(
+                                Math.cos(sparkleAngle) * sparkleRadius,
+                                Math.sin(sparkleAngle) * sparkleRadius,
+                                2, 0, Math.PI * 2
+                            );
+                            ctx.fill();
+                        }
+                    }
+                    
+                    ctx.restore();
+                    
+                    // Draw trail effect for spinning fruits
+                    if (!this.attachedArrow) {
+                        ctx.shadowBlur = 0;
+                        for (let i = 1; i <= 3; i++) {
+                            const trailX = this.x - Math.sin(this.angle) * (i * 5);
+                            const trailY = this.y - this.speed * i;
+                            const trailSize = this.size - i * 5;
+                            const trailAlpha = (100 - i * 30) / 255;
+                            
+                            ctx.fillStyle = `rgba(${this.type === 'apple' ? '255,51,51' : 
+                                              this.type === 'pear' ? '180,212,85' : 
+                                              '255,221,0'},${trailAlpha})`;
+                            ctx.beginPath();
+                            ctx.arc(trailX, trailY, trailSize/2, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                },
+                attachToArrow: function(arrow) {
+                    this.attachedArrow = arrow;
+                    arrow.fruits.push(this);
+                    this.rotationSpeed = 0; // Stop rotation when attached
+                }
+            };
+        }
+        
+        function createBomb(x, y) {
+            return {
+                x: x,
+                y: y,
+                size: 35,
+                speed: (2 + Math.random() * 2) * fruitSpeed,
+                update: function() {
+                    this.y += this.speed;
+                },
+                draw: function() {
+                    // Draw bomb body with neon outline
+                    ctx.fillStyle = '#222';
+                    ctx.strokeStyle = '#ff0000';
+                    ctx.lineWidth = 2;
+                    ctx.shadowColor = '#ff0000';
+                    ctx.shadowBlur = 10;
+                    
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size/2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                    
+                    // Draw bomb fuse
+                    ctx.strokeStyle = '#8B4513';
+                    ctx.lineWidth = 3;
+                    const fuseAngle = Math.PI/3;
+                    const fuseLength = 10;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y - this.size/2);
+                    ctx.lineTo(
+                        this.x + Math.cos(fuseAngle) * fuseLength,
+                        this.y - this.size/2 - Math.sin(fuseAngle) * fuseLength
+                    );
+                    ctx.stroke();
+                    
+                    // Draw fuse spark with animation - using timestamp instead of Date.now()
+                    if (Math.floor(performance.now() / 100) % 2 === 0) {
+                        ctx.fillStyle = '#ffff00';
+                        ctx.shadowColor = '#ffff00';
+                        ctx.shadowBlur = 15;
+                        ctx.beginPath();
+                        ctx.arc(
+                            this.x + Math.cos(fuseAngle) * fuseLength,
+                            this.y - this.size/2 - Math.sin(fuseAngle) * fuseLength,
+                            3, 0, Math.PI * 2
+                        );
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    }
+                }
+            };
+        }
+        
+        function createExplosion(x, y) {
+            // Create screen shake effect
+            const originalX = canvas.style.left || '0px';
+            const originalY = canvas.style.top || '0px';
+            
+            function shake() {
+                const intensity = 10;
+                const shakeX = (Math.random() - 0.5) * intensity;
+                const shakeY = (Math.random() - 0.5) * intensity;
+                canvas.style.position = 'relative';
+                canvas.style.left = `${shakeX}px`;
+                canvas.style.top = `${shakeY}px`;
+            }
+            
+            function resetPosition() {
+                canvas.style.left = originalX;
+                canvas.style.top = originalY;
+            }
+            
+            // Shake for 500ms
+            const shakeInterval = setInterval(shake, 50);
+            setTimeout(() => {
+                clearInterval(shakeInterval);
+                resetPosition();
+            }, 500);
+            
+            // Create explosion particles - limit to prevent stalling
+            const particleCount = 50; // Reduced from 100
+            for (let i = 0; i < particleCount; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 2 + Math.random() * 8;
+                const size = 3 + Math.random() * 7;
+                const lifespan = 30 + Math.random() * 30;
+                
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: size,
+                    color: Math.random() > 0.5 ? '#ff6600' : '#ffff00',
+                    alpha: 1,
+                    decay: 1 / lifespan,
+                    update: function() {
+                        this.x += this.vx;
+                        this.y += this.vy;
+                        this.vy += 0.1; // Gravity
+                        this.alpha -= this.decay;
+                    },
+                    draw: function() {
+                        ctx.fillStyle = `rgba(${this.color === '#ff6600' ? '255,102,0' : '255,255,0'},${this.alpha})`;
+                        ctx.shadowColor = this.color;
+                        ctx.shadowBlur = 10;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    }
+                });
+            }
+            
+            // Create explosion waves
+            for (let i = 0; i < 3; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    size: 10,
+                    maxSize: 150 + i * 50,
+                    growSpeed: 8 + i * 2,
+                    alpha: 0.8,
+                    delay: i * 100,
+                    active: false,
+                    update: function() {
+                        if (!this.active) {
+                            this.delay -= 16.67; // Approximately 60fps
+                            if (this.delay <= 0) this.active = true;
+                            return;
+                        }
+                        
+                        this.size += this.growSpeed;
+                        this.alpha -= 0.02;
+                    },
+                    draw: function() {
+                        if (!this.active) return;
+                        
+                        ctx.fillStyle = `rgba(255,100,0,${this.alpha})`;
+                        ctx.shadowColor = '#ff6600';
+                        ctx.shadowBlur = 20;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        ctx.fillStyle = `rgba(255,200,0,${this.alpha})`;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size * 0.7, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    }
+                });
+            }
+        }
+        
+        function addScorePopup(x, y, points, combo) {
+            const text = combo > 1 ? `+${points} COMBO x${combo}!` : `+${points}`;
+            const colors = ['#ffff00', '#ff00ff', '#00ffff', '#ff6600'];
+            const color = colors[Math.min(combo, colors.length) - 1];
+            
+            scorePopups.push({
+                x: x,
+                y: y,
+                text: text,
+                vy: -2,
+                size: 16 + Math.min(combo, 5) * 2,
+                color: color,
+                alpha: 1,
+                decay: 0.02,
+                update: function() {
+                    this.y += this.vy;
+                    this.alpha -= this.decay;
+                },
+                draw: function() {
+                    ctx.font = `bold ${this.size}px 'Arcade', monospace`;
+                    ctx.fillStyle = `rgba(${this.color === '#ffff00' ? '255,255,0' : 
+                                      this.color === '#ff00ff' ? '255,0,255' : 
+                                      this.color === '#00ffff' ? '0,255,255' : 
+                                      '255,102,0'},${this.alpha})`;
+                    ctx.strokeStyle = `rgba(0,0,0,${this.alpha})`;
+                    ctx.lineWidth = 3;
+                    ctx.textAlign = 'center';
+                    ctx.shadowColor = this.color;
+                    ctx.shadowBlur = 10;
+                    ctx.strokeText(this.text, this.x, this.y);
+                    ctx.fillText(this.text, this.x, this.y);
+                    ctx.shadowBlur = 0;
+                }
+            });
+        }
+        
+        // Spawn fruits and bombs
+        function spawnFruitOrBomb() {
+            const x = canvas.width * 0.2 + Math.random() * (canvas.width * 0.6);
+            const y = -20;
+            
+            if (Math.random() < 0.2) {
+                // 20% chance to spawn a bomb
+                bombs.push(createBomb(x, y));
+            } else {
+                // 80% chance to spawn a fruit
+                const fruitType = Math.random();
+                if (fruitType < 0.7) {
+                    // 70% chance for apple
+                    fruits.push(createFruit(x, y, "apple"));
+                } else if (fruitType < 0.9) {
+                    // 20% chance for pear
+                    fruits.push(createFruit(x, y, "pear"));
+                } else {
+                    // 10% chance for special fruit
+                    fruits.push(createFruit(x, y, "special"));
+                }
+            }
+        }
+        
+        // Collision detection
+        function checkCollision(arrow, obj) {
+            const dx = (arrow.x + arrow.width/2) - obj.x;
+            const dy = arrow.y - obj.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            return distance < obj.size/2 + 5;
+        }
+        
+        // Game state functions
+        function updateDifficulty() {
+            difficulty = parseInt(document.getElementById('difficulty').value);
+            document.getElementById('difficulty-value').textContent = difficulty;
+            
+            // Update game parameters based on difficulty
+            fruitSpawnRate = 0.01 + (difficulty - 1) * 0.004;
+            fruitSpeed = 1 + (difficulty - 1) * 0.4;
+            landscapeSpeed = 0.5 + (difficulty - 1) * 0.2;
+        }
+        
+        function endGame() {
+            gameOver = true;
+            document.getElementById('game-over').style.display = 'block';
+            document.getElementById('final-score').textContent = score;
+            
+            // Stop background music and play game over sound
+            if (sounds.backgroundMusic) sounds.backgroundMusic.pause();
+            playSound('gameOver');
+        }
+        
+        function restartGame() {
+            document.getElementById('game-over').style.display = 'none';
+            init();
+        }
+        
+        function updateScoreDisplay() {
+            document.getElementById('score').textContent = score;
+            
+            // Flash score text for visual feedback
+            document.getElementById('score').style.textShadow = '0 0 20px #ffff00';
+            setTimeout(() => {
+                document.getElementById('score').style.textShadow = '0 0 5px #ffff00';
+            }, 200);
+        }
+        
+        function updateApplesDisplay() {
+            // Clear previous apples
+            applesDisplay.innerHTML = '';
+            
+            // Add visual representation of speared apples
+            for (let i = 0; i < spearApples.length; i++) {
+                const appleIcon = document.createElement('div');
+                appleIcon.className = 'apple-icon';
+                appleIcon.style.backgroundColor = spearApples[i].color;
+                applesDisplay.appendChild(appleIcon);
+            }
+            
+            // Also update the dropped apples counter if needed
+            // This is a fix for the missing 'apples' element issue
+            const applesDroppedElement = document.getElementById('apples-dropped');
+            if (applesDroppedElement) {
+                applesDroppedElement.textContent = applesDropped;
+            }
+        }
+        
+        function updateArrowsDisplay() {
+            // Clear previous arrows
+            arrowsDisplay.innerHTML = '';
+            
+            // Add visual representation of arrows left
+            for (let i = 0; i < arrowsLeft; i++) {
+                const arrowIcon = document.createElement('div');
+                arrowIcon.className = 'arrow-icon';
+                arrowsDisplay.appendChild(arrowIcon);
+            }
+        }
+        
+        // Event listeners
+        canvas.addEventListener('mousemove', function(e) {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+        });
+        
+        canvas.addEventListener('click', function() {
+            if (!gameOver && arrowsLeft > 0) {
+                arrows.push(createArrow(archer.x + 30, archer.y));
+                arrowsLeft--;
+                updateArrowsDisplay();
+            }
+        });
+        
+        document.getElementById('difficulty').addEventListener('input', updateDifficulty);
+        document.getElementById('restart-button').addEventListener('click', restartGame);
+        
+        // Toggle audio button
+        document.getElementById('toggle-audio').addEventListener('click', function() {
+            audioEnabled = !audioEnabled;
+            this.textContent = audioEnabled ? "Disable Audio" : "Enable Audio";
+            
+            if (audioEnabled) {
+                playSound('backgroundMusic');
+            } else if (sounds.backgroundMusic) {
+                sounds.backgroundMusic.pause();
+            }
+        });
+        
+        // Add touch support for mobile devices
+        canvas.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            mouseX = touch.clientX - rect.left;
+            mouseY = touch.clientY - rect.top;
+        });
+        
+        canvas.addEventListener('touchstart', function(e) {
+            if (!gameOver && arrowsLeft > 0) {
+                arrows.push(createArrow(archer.x + 30, archer.y));
+                arrowsLeft--;
+                updateArrowsDisplay();
+            }
+            // Don't prevent default here to avoid browser warnings
+        });
+        
+        // Preload audio and initialize game
+        preloadAudio();
+        updateDifficulty();
+        init();
+    </script>
+</body>
+</html>
