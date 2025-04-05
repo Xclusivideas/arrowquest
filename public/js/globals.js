@@ -9,7 +9,7 @@ function resizeCanvas() {
     if (!container) return; // Safety check in case container is not loaded yet
     
     const containerWidth = container.clientWidth;
-    canvas.width = Math.min(800, containerWidth - 20); // 10px padding on each side
+    canvas.width = Math.min(1600, containerWidth - 20); // Doubled from 800 to 1600
     canvas.height = canvas.width * 0.75; // Keep 4:3 aspect ratio
     
     // Update display heights based on new canvas height
