@@ -1,4 +1,3 @@
-
 // Background elements and rendering
 
 // Initialize background elements
@@ -66,7 +65,7 @@ function initBackground() {
     for (let i = 0; i < 40; i++) {
         grassPatches.push({
             x: Math.random() * canvas.width,
-            y: canvas.height * 0.5 + Math.random() * (canvas.height * 0.1),
+            y: canvas.height * 0.5 + Math.random() * (canvas.height * 0.2), // Extended lower
             width: 20 + Math.random() * 30,
             height: 10 + Math.random() * 15,
             bladeCount: 3 + Math.floor(Math.random() * 5),
@@ -82,7 +81,7 @@ function initBackground() {
     for (let i = 0; i <= numPoints; i++) {
         wavePoints.push({
             x: (canvas.width / numPoints) * i,
-            y: canvas.height * 0.67, // Moved up to connect with grass better
+            y: canvas.height * 0.75, // Moved down to match extended grass
             angle: Math.random() * Math.PI * 2
         });
     }
@@ -216,7 +215,7 @@ function drawBackground() {
         ctx.stroke();
     }
     
-    // Draw grass base without gap
+    // Draw grass base without gap - EXTENDED LOWER
     drawGrassBase();
     
     // Draw improved trees
@@ -302,16 +301,16 @@ function drawBackground() {
     drawWater();
 }
 
-// Draw grass base
+// Draw grass base - EXTENDED LOWER
 function drawGrassBase() {
-    // Draw a solid grass layer from mountains to water with no gap
-    const grassGradient = ctx.createLinearGradient(0, canvas.height * 0.5, 0, canvas.height * 0.67);
+    // Draw a solid grass layer from mountains to water with no gap - EXTENDED DOWN
+    const grassGradient = ctx.createLinearGradient(0, canvas.height * 0.5, 0, canvas.height * 0.8);
     grassGradient.addColorStop(0, '#1A472A'); // Dark green at mountain border
     grassGradient.addColorStop(1, '#2A603A'); // Slightly lighter green at water border
     
     ctx.fillStyle = grassGradient;
     ctx.beginPath();
-    ctx.rect(0, canvas.height * 0.5, canvas.width, canvas.height * 0.17);
+    ctx.rect(0, canvas.height * 0.5, canvas.width, canvas.height * 0.3); // Extended height
     ctx.fill();
 }
 
@@ -361,16 +360,16 @@ function drawGrassDetails() {
     }
 }
 
-// Draw water connected to grass
+// Draw water connected to grass - MOVED DOWN
 function drawWater() {
     // Update wave points
     for (let i = 0; i < wavePoints.length; i++) {
         wavePoints[i].angle += 0.02; // Slower wave movement
-        wavePoints[i].y = canvas.height * 0.67 + Math.sin(wavePoints[i].angle) * 5;
+        wavePoints[i].y = canvas.height * 0.75 + Math.sin(wavePoints[i].angle) * 5; // Moved down to match extended grass
     }
     
     // Draw water with neon effect
-    const gradient = ctx.createLinearGradient(0, canvas.height * 0.67, 0, canvas.height);
+    const gradient = ctx.createLinearGradient(0, canvas.height * 0.75, 0, canvas.height);
     gradient.addColorStop(0, 'rgba(0, 120, 255, 0.7)');
     gradient.addColorStop(1, 'rgba(0, 50, 150, 0.7)');
     
@@ -402,6 +401,4 @@ function drawWater() {
     }
     ctx.stroke();
     ctx.shadowBlur = 0;
-    
-    // No more fast-moving reflections
 }

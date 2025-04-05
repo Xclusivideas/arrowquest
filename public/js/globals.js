@@ -6,13 +6,18 @@ const ctx = canvas.getContext('2d');
 // Responsive canvas sizing with proper initial dimensions
 function resizeCanvas() {
     const container = document.getElementById('game-container');
+    if (!container) return; // Safety check in case container is not loaded yet
+    
     const containerWidth = container.clientWidth;
     canvas.width = Math.min(800, containerWidth - 20); // 10px padding on each side
     canvas.height = canvas.width * 0.75; // Keep 4:3 aspect ratio
     
     // Update display heights based on new canvas height
-    document.getElementById('arrows-display').style.height = canvas.height + 'px';
-    document.getElementById('apples-display').style.height = canvas.height + 'px';
+    const arrowsDisplay = document.getElementById('arrows-display');
+    const applesDisplay = document.getElementById('apples-display');
+    
+    if (arrowsDisplay) arrowsDisplay.style.height = canvas.height + 'px';
+    if (applesDisplay) applesDisplay.style.height = canvas.height + 'px';
     
     // Reinitialize game if it was already started
     if (gameStarted) {
@@ -20,9 +25,17 @@ function resizeCanvas() {
     }
 }
 
-// Set initial size immediately and again when fully loaded
-window.addEventListener('DOMContentLoaded', resizeCanvas); // Apply sizing on DOM load
-window.addEventListener('load', resizeCanvas); // And again on full load
+// Set initial size immediately on script load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(resizeCanvas, 0); // Ensure this runs after DOM is fully loaded
+    });
+} else {
+    setTimeout(resizeCanvas, 0); // DOM already loaded, resize immediately
+}
+
+// And resize again on window load and resize
+window.addEventListener('load', resizeCanvas);
 window.addEventListener('resize', resizeCanvas);
 
 // Game state
@@ -71,7 +84,8 @@ let keys = {
     ArrowUp: false,
     ArrowDown: false,
     ArrowLeft: false,
-    ArrowRight: false
+    ArrowRight: false,
+    Enter: false // Add Enter key
 };
 
 // Debug variables

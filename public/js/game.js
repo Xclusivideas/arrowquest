@@ -1,4 +1,3 @@
-
 // Main game logic and loop
 
 // Initialize game
@@ -206,6 +205,22 @@ function animateTitle() {
     }
 }
 
+// Fire an arrow function
+function fireArrow() {
+    if (!gameOver && !bombExplosionInProgress && arrowsLeft > 0) {
+        // Arrow spawns at archer's position and flies in the direction the archer is facing
+        const arrowX = archerDirection === 'right' ? archer.x + 30 : archer.x - 30;
+        arrows.push(createArrow(arrowX, archer.y));
+        arrowsLeft--;
+        updateArrowsDisplay();
+        
+        // End game if no arrows left
+        if (arrowsLeft === 0) {
+            setTimeout(endGame, 2000); // Give time for last arrow to potentially hit
+        }
+    }
+}
+
 // Event listeners
 window.addEventListener('DOMContentLoaded', () => {
     // Mouse move
@@ -217,18 +232,7 @@ window.addEventListener('DOMContentLoaded', () => {
     
     // Click to shoot
     canvas.addEventListener('click', function() {
-        if (!gameOver && !bombExplosionInProgress && arrowsLeft > 0) {
-            // Arrow spawns at archer's position and flies in the direction the archer is facing
-            const arrowX = archerDirection === 'right' ? archer.x + 30 : archer.x - 30;
-            arrows.push(createArrow(arrowX, archer.y));
-            arrowsLeft--;
-            updateArrowsDisplay();
-            
-            // End game if no arrows left
-            if (arrowsLeft === 0) {
-                setTimeout(endGame, 2000); // Give time for last arrow to potentially hit
-            }
-        }
+        fireArrow();
     });
     
     // Touch move for mobile
@@ -242,34 +246,30 @@ window.addEventListener('DOMContentLoaded', () => {
     
     // Touch start for mobile (shoot)
     canvas.addEventListener('touchstart', function(e) {
-        if (!gameOver && !bombExplosionInProgress && arrowsLeft > 0) {
-            const rect = canvas.getBoundingClientRect();
-            const touch = e.touches[0];
-            mouseX = touch.clientX - rect.left;
-            mouseY = touch.clientY - rect.top;
-            
-            const arrowX = archerDirection === 'right' ? archer.x + 30 : archer.x - 30;
-            arrows.push(createArrow(arrowX, archer.y));
-            arrowsLeft--;
-            updateArrowsDisplay();
-            
-            // End game if no arrows left
-            if (arrowsLeft === 0) {
-                setTimeout(endGame, 2000); // Give time for last arrow to potentially hit
-            }
-        }
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        mouseX = touch.clientX - rect.left;
+        mouseY = touch.clientY - rect.top;
+        
+        fireArrow();
     });
     
     // Keyboard controls
     window.addEventListener('keydown', function(e) {
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key)) {
             keys[e.key] = true;
             e.preventDefault(); // Prevent scrolling
+            
+            // Fire arrow when Enter is pressed
+            if (e.key === 'Enter') {
+                fireArrow();
+            }
         }
     });
     
     window.addEventListener('keyup', function(e) {
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key)) {
             keys[e.key] = false;
         }
     });

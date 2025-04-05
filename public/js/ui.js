@@ -142,10 +142,13 @@ function showGameOver() {
 
 // Handle instructions modal
 function setupInstructionsModal() {
-    // Show instructions button
-    document.getElementById('show-instructions').addEventListener('click', () => {
-        document.getElementById('instructions-modal').classList.remove('hidden');
-    });
+    // Show instructions button - make it work immediately without waiting for game start
+    const showInstructionsBtn = document.getElementById('show-instructions');
+    if (showInstructionsBtn) {
+        showInstructionsBtn.addEventListener('click', () => {
+            document.getElementById('instructions-modal').classList.remove('hidden');
+        });
+    }
     
     // Close instructions button
     document.getElementById('close-instructions').addEventListener('click', () => {
