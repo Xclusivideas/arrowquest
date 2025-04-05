@@ -1,4 +1,3 @@
-
 // Collision detection and handling
 
 // Check collision between arrow and object
@@ -92,6 +91,14 @@ function removeOffscreenObjects() {
     // Remove arrows that are off-screen
     for (let i = arrows.length - 1; i >= 0; i--) {
         if (arrows[i].x - arrows[i].width/2 > canvas.width) {
+            // Remove fruits attached to this arrow from the game
+            // (but keep them in the spearApples array for display)
+            for (let fruit of arrows[i].fruits) {
+                const fruitIndex = fruits.indexOf(fruit);
+                if (fruitIndex > -1) {
+                    fruits.splice(fruitIndex, 1);
+                }
+            }
             arrows.splice(i, 1);
         }
     }

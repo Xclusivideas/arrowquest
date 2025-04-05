@@ -1,4 +1,3 @@
-
 // Game objects
 
 // Create archer object
@@ -280,6 +279,13 @@ function createFruit(x, y, type = "apple") {
             this.attachedArrow = arrow;
             arrow.fruits.push(this);
             this.rotationSpeed = 0; // Stop rotation when attached
+            
+            // Add to speared apples collection for side display
+            spearApples.push({
+                type: this.type,
+                color: this.color
+            });
+            updateApplesDisplay();
         }
     };
 }

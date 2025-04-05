@@ -1,4 +1,3 @@
-
 // UI related functions
 
 // Update score display
@@ -50,8 +49,10 @@ function updateApplesDisplay() {
             fruitIcon.style.backgroundColor = spearApples[i].color;
         } else if (spearApples[i].type === "pear") {
             fruitIcon.className = 'pear-icon';
+            fruitIcon.style.backgroundColor = spearApples[i].color;
         } else if (spearApples[i].type === "special") {
             fruitIcon.className = 'star-icon';
+            fruitIcon.style.backgroundColor = spearApples[i].color;
         }
         applesDisplay.appendChild(fruitIcon);
     }

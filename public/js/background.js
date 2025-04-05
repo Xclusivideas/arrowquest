@@ -1,4 +1,3 @@
-
 // Background elements and rendering
 
 // Initialize background elements
@@ -38,7 +37,9 @@ function initBackground() {
             height: 120 + Math.random() * 100,
             jaggedness: 0.2 + Math.random() * 0.3, // Mountain jaggedness factor
             peakCount: 3 + Math.floor(Math.random() * 3), // Number of peaks
-            speed: 0.3
+            speed: 0.3,
+            // Pre-generate peak heights to avoid wiggling
+            peakHeights: Array(5).fill(0).map(() => 0.8 + Math.random() * 0.4)
         });
     }
     
@@ -56,7 +57,7 @@ function initBackground() {
         });
     }
     
-    // Initialize grass patches
+    // Initialize grass patches with fixed positions
     grassPatches = [];
     for (let i = 0; i < 40; i++) {
         grassPatches.push({
@@ -65,7 +66,10 @@ function initBackground() {
             width: 20 + Math.random() * 30,
             height: 10 + Math.random() * 15,
             bladeCount: 3 + Math.floor(Math.random() * 5),
-            speed: 0.5
+            speed: 0.5,
+            // Pre-generate blade heights and curves to avoid flickering
+            bladeHeights: Array(5).fill(0).map(() => 0.7 + Math.random() * 0.6),
+            bladeCurves: Array(5).fill(0).map(() => (Math.random() - 0.5) * 10)
         });
     }
     
@@ -135,7 +139,8 @@ function drawBackground() {
     }
     
     // Draw improved mountains
-    for (let mountain of mountains) {
+    for (let i = 0; i < mountains.length; i++) {
+        let mountain = mountains[i];
         // Update mountain position
         mountain.x -= mountain.speed * landscapeSpeed;
         if (mountain.x + mountain.width < 0) {
@@ -144,6 +149,8 @@ function drawBackground() {
             mountain.height = 120 + Math.random() * 100;
             mountain.jaggedness = 0.2 + Math.random() * 0.3;
             mountain.peakCount = 3 + Math.floor(Math.random() * 3);
+            // Generate new peak heights when resetting
+            mountain.peakHeights = Array(5).fill(0).map(() => 0.8 + Math.random() * 0.4);
         }
         
         // Draw improved mountain range with multiple peaks
@@ -154,29 +161,33 @@ function drawBackground() {
         ctx.beginPath();
         ctx.moveTo(mountain.x, mountain.y);
         
-        // Create multi-peak mountain
+        // Create multi-peak mountain with stable shapes
         const peakSpacing = mountain.width / mountain.peakCount;
-        for (let i = 0; i <= mountain.peakCount; i++) {
-            const peakX = mountain.x + i * peakSpacing;
+        let prevPeakHeight = mountain.height * 0.5;
+        
+        for (let j = 0; j <= mountain.peakCount; j++) {
+            const peakX = mountain.x + j * peakSpacing;
             let peakHeight = 0;
             
-            if (i === 0 || i === mountain.peakCount) {
+            if (j === 0 || j === mountain.peakCount) {
                 peakHeight = mountain.height * 0.5; // Lower heights at edges
             } else {
-                peakHeight = mountain.height * (0.8 + Math.random() * 0.4); // Varied heights
+                // Use pre-generated heights for stability
+                peakHeight = mountain.height * mountain.peakHeights[j % mountain.peakHeights.length];
             }
             
-            // Add some jaggedness to peaks
-            if (i > 0) {
+            // Add some jaggedness to peaks with consistent patterns
+            if (j > 0) {
                 const segmentCount = 5;
                 const segmentWidth = peakSpacing / segmentCount;
                 
-                for (let j = 1; j <= segmentCount; j++) {
-                    const segX = mountain.x + (i-1) * peakSpacing + j * segmentWidth;
+                for (let k = 1; k <= segmentCount; k++) {
+                    const segX = mountain.x + (j-1) * peakSpacing + k * segmentWidth;
+                    // Use consistent jaggedness based on position
+                    const jaggedness = Math.sin(j * 5 + k) * mountain.jaggedness * 15;
                     const segHeight = mountain.y - Math.max(0, 
-                        ((j / segmentCount) * peakHeight + 
-                        ((segmentCount - j) / segmentCount) * prevPeakHeight) + 
-                        (Math.random() * 2 - 1) * mountain.jaggedness * 20);
+                        ((k / segmentCount) * peakHeight + 
+                        ((segmentCount - k) / segmentCount) * prevPeakHeight) + jaggedness);
                     
                     ctx.lineTo(segX, segHeight);
                 }
@@ -190,15 +201,16 @@ function drawBackground() {
         ctx.fill();
         ctx.stroke();
         
-        // Draw snow caps on taller peaks
+        // Draw snow caps on taller peaks with consistent patterns
         ctx.fillStyle = '#ffffff';
         ctx.shadowColor = '#00ffff';
         ctx.shadowBlur = 10;
         
-        for (let i = 1; i < mountain.peakCount; i++) {
-            if (Math.random() > 0.3) continue; // Only some peaks have snow
+        for (let j = 1; j < mountain.peakCount; j++) {
+            // Use deterministic condition based on peak index
+            if ((j + i) % 3 !== 0) continue; // Only some peaks have snow
             
-            const peakX = mountain.x + i * peakSpacing;
+            const peakX = mountain.x + j * peakSpacing;
             const snowWidth = peakSpacing * 0.4;
             const snowHeight = mountain.height * 0.15;
             
@@ -213,7 +225,7 @@ function drawBackground() {
         ctx.shadowBlur = 0;
     }
     
-    // Draw grass layer between mountains and water
+    // Draw grass layer between mountains and water - moved to drawGrass function
     drawGrass();
     
     // Draw water
@@ -334,7 +346,7 @@ function drawWater() {
     }
 }
 
-// Draw grass (new function)
+// Draw grass (modified to be more stable)
 function drawGrass() {
     // Draw grass layer
     ctx.fillStyle = '#1A472A'; // Dark green base
@@ -342,8 +354,9 @@ function drawGrass() {
     ctx.rect(0, canvas.height * 0.6, canvas.width, canvas.height * 0.15);
     ctx.fill();
     
-    // Update and draw grass patches
-    for (let grass of grassPatches) {
+    // Update and draw grass patches with stable patterns
+    for (let i = 0; i < grassPatches.length; i++) {
+        let grass = grassPatches[i];
         // Update grass position
         grass.x -= grass.speed * landscapeSpeed;
         if (grass.x + grass.width < 0) {
@@ -352,17 +365,21 @@ function drawGrass() {
             grass.width = 20 + Math.random() * 30;
             grass.height = 10 + Math.random() * 15;
             grass.bladeCount = 3 + Math.floor(Math.random() * 5);
+            // Generate new values for blade shapes when resetting
+            grass.bladeHeights = Array(5).fill(0).map(() => 0.7 + Math.random() * 0.6);
+            grass.bladeCurves = Array(5).fill(0).map(() => (Math.random() - 0.5) * 10);
         }
         
-        // Draw detailed grass blades
+        // Draw detailed grass blades with stable patterns
         ctx.fillStyle = '#4CAF50'; // Bright green for grass blades
         ctx.strokeStyle = '#388E3C'; // Darker green for outlines
         ctx.lineWidth = 1;
         
-        for (let i = 0; i < grass.bladeCount; i++) {
-            const bladeX = grass.x + i * (grass.width / grass.bladeCount);
-            const bladeHeight = grass.height * (0.7 + Math.random() * 0.6);
-            const bladeCurve = (Math.random() - 0.5) * 10;
+        for (let j = 0; j < grass.bladeCount; j++) {
+            const bladeX = grass.x + j * (grass.width / grass.bladeCount);
+            // Use pre-generated values for stability
+            const bladeHeight = grass.height * grass.bladeHeights[j % grass.bladeHeights.length];
+            const bladeCurve = grass.bladeCurves[j % grass.bladeCurves.length];
             
             ctx.beginPath();
             ctx.moveTo(bladeX, grass.y);
@@ -383,12 +400,13 @@ function drawGrass() {
         }
     }
     
-    // Add some grass at the edge of the water
+    // Add some grass at the edge of the water with stable pattern
     ctx.strokeStyle = '#64DD17'; // Light green for grass edge highlights
     ctx.lineWidth = 2;
     
     for (let i = 0; i < canvas.width; i += 10) {
-        const height = 5 + Math.random() * 8;
+        // Use deterministic height based on position
+        const height = 5 + Math.abs(Math.sin(i * 0.1)) * 8;
         
         ctx.beginPath();
         ctx.moveTo(i, canvas.height * 0.75);

@@ -16,7 +16,7 @@ function resizeCanvas() {
 }
 
 // Set initial size
-window.addEventListener('DOMContentLoaded', resizeCanvas);
+window.addEventListener('load', resizeCanvas); // Changed from DOMContentLoaded to load
 window.addEventListener('resize', resizeCanvas);
 
 // Game state
