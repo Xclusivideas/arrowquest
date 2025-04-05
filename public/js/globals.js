@@ -15,8 +15,9 @@ function resizeCanvas() {
     document.getElementById('apples-display').style.height = canvas.height + 'px';
 }
 
-// Set initial size
-window.addEventListener('load', resizeCanvas); // Changed from DOMContentLoaded to load
+// Set initial size immediately and again when fully loaded
+resizeCanvas(); // Apply sizing immediately
+window.addEventListener('load', resizeCanvas); // And again on full load
 window.addEventListener('resize', resizeCanvas);
 
 // Game state
