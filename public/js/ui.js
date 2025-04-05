@@ -1,3 +1,4 @@
+
 // UI related functions
 
 // Update score display
@@ -35,7 +36,7 @@ function updateArrowsDisplay() {
     }
 }
 
-// Update apples display
+// Update apples display - improved to show speared fruits on right side
 function updateApplesDisplay() {
     // Clear previous apples
     const applesDisplay = document.getElementById('apples-display');
@@ -44,6 +45,7 @@ function updateApplesDisplay() {
     // Add visual representation of speared apples
     for (let i = 0; i < spearApples.length; i++) {
         const fruitIcon = document.createElement('div');
+        
         if (spearApples[i].type === "apple") {
             fruitIcon.className = 'apple-icon';
             fruitIcon.style.backgroundColor = spearApples[i].color;
@@ -54,6 +56,8 @@ function updateApplesDisplay() {
             fruitIcon.className = 'star-icon';
             fruitIcon.style.backgroundColor = spearApples[i].color;
         }
+        
+        // Make sure icons stack from bottom to top on right side
         applesDisplay.appendChild(fruitIcon);
     }
 }

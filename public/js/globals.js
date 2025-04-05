@@ -3,7 +3,7 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Responsive canvas sizing
+// Responsive canvas sizing with proper initial dimensions
 function resizeCanvas() {
     const container = document.getElementById('game-container');
     const containerWidth = container.clientWidth;
@@ -13,10 +13,15 @@ function resizeCanvas() {
     // Update display heights based on new canvas height
     document.getElementById('arrows-display').style.height = canvas.height + 'px';
     document.getElementById('apples-display').style.height = canvas.height + 'px';
+    
+    // Reinitialize game if it was already started
+    if (gameStarted && !gameOver) {
+        initGame();
+    }
 }
 
 // Set initial size immediately and again when fully loaded
-resizeCanvas(); // Apply sizing immediately
+window.addEventListener('DOMContentLoaded', resizeCanvas); // Apply sizing on DOM load
 window.addEventListener('load', resizeCanvas); // And again on full load
 window.addEventListener('resize', resizeCanvas);
 

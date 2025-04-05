@@ -165,6 +165,17 @@ function updateGame(deltaTime) {
         bombs[i].update();
         bombs[i].draw();
     }
+    
+    // Update score popups
+    for (let i = scorePopups.length - 1; i >= 0; i--) {
+        scorePopups[i].update();
+        scorePopups[i].draw();
+        
+        // Remove faded popups
+        if (scorePopups[i].alpha <= 0) {
+            scorePopups.splice(i, 1);
+        }
+    }
 }
 
 // Event listeners
