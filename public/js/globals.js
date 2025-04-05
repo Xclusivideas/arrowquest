@@ -1,3 +1,4 @@
+
 // Game canvas and context
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -24,18 +25,12 @@ function resizeCanvas() {
     }
 }
 
-// Improved initialization to ensure container is fully rendered and sized properly
+// Improved initialization to ensure container is fully rendered
 function initializeCanvasSize() {
-    // Set initial dimensions that are likely to work immediately
-    const viewportWidth = window.innerWidth;
-    const initialWidth = Math.min(800, viewportWidth - 40); // More conservative initial size
-    canvas.width = initialWidth;
-    canvas.height = initialWidth * 0.75;
-    
-    // First attempt at proper sizing
+    // First attempt at initialization
     resizeCanvas();
     
-    // Additional check after a short delay to ensure container has proper dimensions
+    // Additional check after a longer delay to ensure container has proper dimensions
     setTimeout(() => {
         resizeCanvas();
         
