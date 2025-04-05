@@ -142,7 +142,7 @@ function showGameOver() {
 
 // Handle instructions modal
 function setupInstructionsModal() {
-    // Show instructions button - modified to work immediately without waiting for start
+    // Show instructions button
     document.getElementById('show-instructions').addEventListener('click', () => {
         document.getElementById('instructions-modal').classList.remove('hidden');
     });
@@ -162,30 +162,26 @@ function setupInstructionsModal() {
 
 // Setup player name form
 function setupPlayerForm() {
-    // Start game button - fixed to properly start the game
-    document.getElementById('start-game-btn').addEventListener('click', startGame);
+    document.getElementById('start-game-btn').addEventListener('click', () => {
+        playerName = document.getElementById('player-name').value.trim();
+        if (playerName === '') {
+            playerName = 'Player' + Math.floor(Math.random() * 1000);
+        }
+        
+        // Hide setup screen and show game screen
+        document.getElementById('player-setup').classList.add('hidden');
+        document.getElementById('game-container').classList.remove('hidden');
+        
+        // Start the game
+        initGame();
+    });
     
     // Also allow Enter key to start game
     document.getElementById('player-name').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            startGame();
+            document.getElementById('start-game-btn').click();
         }
     });
-}
-
-// Function to start the game - refactored to avoid duplication
-function startGame() {
-    playerName = document.getElementById('player-name').value.trim();
-    if (playerName === '') {
-        playerName = 'Player' + Math.floor(Math.random() * 1000);
-    }
-    
-    // Hide setup screen and show game screen
-    document.getElementById('player-setup').classList.add('hidden');
-    document.getElementById('game-container').classList.remove('hidden');
-    
-    // Start the game
-    initGame();
 }
 
 // Initialize UI
@@ -217,7 +213,7 @@ function initUI() {
         });
     }
     
-    // Setup instructions modal - make sure it works immediately
+    // Setup instructions modal
     setupInstructionsModal();
     
     // Setup player form

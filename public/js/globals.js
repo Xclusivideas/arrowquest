@@ -20,9 +20,6 @@ function resizeCanvas() {
     }
 }
 
-// Apply proper sizing immediately to prevent initial zoom issue
-resizeCanvas();
-
 // Set initial size immediately and again when fully loaded
 window.addEventListener('DOMContentLoaded', resizeCanvas); // Apply sizing on DOM load
 window.addEventListener('load', resizeCanvas); // And again on full load
@@ -91,4 +88,3 @@ let leaderboard = [];
 
 // For title animation
 let titleAngle = 0;
-let titleCharacterOffsets = []; // For individual letter animation

@@ -26,8 +26,7 @@ function initGame() {
             ArrowUp: false,
             ArrowDown: false,
             ArrowLeft: false,
-            ArrowRight: false,
-            Enter: false
+            ArrowRight: false
         };
         
         // Create archer
@@ -41,9 +40,7 @@ function initGame() {
         updateArrowsDisplay();
         updateApplesDisplay();
         updateTimeDisplay();
-        
-        // Initialize title character offsets for animation
-        initTitleAnimation();
+        animateTitle();
         
         // Start game timer
         startGameTimer();
@@ -65,34 +62,6 @@ function initGame() {
     } catch (e) {
         console.error("Initialization error:", e);
         updateDebugPanel(`Init error: ${e.message}`);
-    }
-}
-
-// Initialize title animation
-function initTitleAnimation() {
-    // Get the title text
-    const titleElement = document.querySelector('h1');
-    if (!titleElement) return;
-    
-    const titleText = titleElement.textContent || "Arrow Quest";
-    
-    // Clear previous content
-    titleElement.innerHTML = '';
-    titleCharacterOffsets = [];
-    
-    // Create spans for each character with individual animation
-    for (let i = 0; i < titleText.length; i++) {
-        const span = document.createElement('span');
-        span.textContent = titleText[i];
-        span.style.display = 'inline-block';
-        span.style.position = 'relative';
-        titleElement.appendChild(span);
-        
-        // Initialize with random offset phase
-        titleCharacterOffsets.push({
-            phase: Math.random() * Math.PI * 2,
-            speed: 0.05 + Math.random() * 0.03
-        });
     }
 }
 
@@ -165,9 +134,6 @@ function gameLoop(timestamp) {
             removeOffscreenObjects();
         }
         
-        // Animate title
-        animateTitle();
-        
         // Request next frame with error handling
         gameLoopRunning = true;
         requestAnimationFrame(gameLoop);
@@ -220,6 +186,9 @@ function updateGame(deltaTime) {
             scorePopups.splice(i, 1);
         }
     }
+    
+    // Animate title
+    animateTitle();
 }
 
 // Animate the game title
@@ -227,32 +196,13 @@ function animateTitle() {
     titleAngle += 0.03;
     
     const titleElement = document.querySelector('h1');
-    if (!titleElement) return;
-    
-    // Get all character spans
-    const chars = titleElement.querySelectorAll('span');
-    if (chars.length === 0) {
-        initTitleAnimation();
-        return;
-    }
-    
-    // Animate each character individually
-    for (let i = 0; i < chars.length; i++) {
-        if (i >= titleCharacterOffsets.length) continue;
+    if (titleElement) {
+        const glowAmount = 5 + Math.sin(titleAngle) * 5;
+        const scaleAmount = 1 + Math.sin(titleAngle) * 0.03;
         
-        // Update phase for this character
-        titleCharacterOffsets[i].phase += titleCharacterOffsets[i].speed;
-        
-        // Calculate vertical position
-        const yOffset = Math.sin(titleCharacterOffsets[i].phase) * 5;
-        
-        // Apply transform with vertical offset
-        chars[i].style.transform = `translateY(${yOffset}px)`;
-        chars[i].style.transition = 'transform 0.1s ease-in-out';
-        
-        // Add glow effect
-        const glowAmount = 5 + Math.sin(titleAngle + i * 0.3) * 5;
-        chars[i].style.textShadow = `0 0 ${glowAmount}px #00ffff`;
+        titleElement.style.textShadow = `0 0 ${glowAmount}px #00ffff`;
+        titleElement.style.transform = `scale(${scaleAmount})`;
+        titleElement.style.transition = 'text-shadow 0.3s ease-in-out, transform 0.3s ease-in-out';
     }
 }
 
@@ -267,7 +217,18 @@ window.addEventListener('DOMContentLoaded', () => {
     
     // Click to shoot
     canvas.addEventListener('click', function() {
-        shootArrow();
+        if (!gameOver && !bombExplosionInProgress && arrowsLeft > 0) {
+            // Arrow spawns at archer's position and flies in the direction the archer is facing
+            const arrowX = archerDirection === 'right' ? archer.x + 30 : archer.x - 30;
+            arrows.push(createArrow(arrowX, archer.y));
+            arrowsLeft--;
+            updateArrowsDisplay();
+            
+            // End game if no arrows left
+            if (arrowsLeft === 0) {
+                setTimeout(endGame, 2000); // Give time for last arrow to potentially hit
+            }
+        }
     });
     
     // Touch move for mobile
@@ -287,25 +248,28 @@ window.addEventListener('DOMContentLoaded', () => {
             mouseX = touch.clientX - rect.left;
             mouseY = touch.clientY - rect.top;
             
-            shootArrow();
+            const arrowX = archerDirection === 'right' ? archer.x + 30 : archer.x - 30;
+            arrows.push(createArrow(arrowX, archer.y));
+            arrowsLeft--;
+            updateArrowsDisplay();
+            
+            // End game if no arrows left
+            if (arrowsLeft === 0) {
+                setTimeout(endGame, 2000); // Give time for last arrow to potentially hit
+            }
         }
     });
     
     // Keyboard controls
     window.addEventListener('keydown', function(e) {
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key)) {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
             keys[e.key] = true;
             e.preventDefault(); // Prevent scrolling
-            
-            // Shoot arrow on Enter key press
-            if (e.key === 'Enter' && !gameOver && !bombExplosionInProgress) {
-                shootArrow();
-            }
         }
     });
     
     window.addEventListener('keyup', function(e) {
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key)) {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
             keys[e.key] = false;
         }
     });
@@ -319,19 +283,3 @@ window.addEventListener('DOMContentLoaded', () => {
     // Preload audio
     preloadAudio();
 });
-
-// Helper function to shoot an arrow - refactored to avoid code duplication
-function shootArrow() {
-    if (!gameOver && !bombExplosionInProgress && arrowsLeft > 0) {
-        // Arrow spawns at archer's position and flies in the direction the archer is facing
-        const arrowX = archerDirection === 'right' ? archer.x + 30 : archer.x - 30;
-        arrows.push(createArrow(arrowX, archer.y));
-        arrowsLeft--;
-        updateArrowsDisplay();
-        
-        // End game if no arrows left
-        if (arrowsLeft === 0) {
-            setTimeout(endGame, 2000); // Give time for last arrow to potentially hit
-        }
-    }
-}

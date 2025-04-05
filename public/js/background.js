@@ -82,7 +82,7 @@ function initBackground() {
     for (let i = 0; i <= numPoints; i++) {
         wavePoints.push({
             x: (canvas.width / numPoints) * i,
-            y: canvas.height * 0.65, // Moved up to connect better with grass
+            y: canvas.height * 0.67, // Moved up to connect with grass better
             angle: Math.random() * Math.PI * 2
         });
     }
@@ -216,7 +216,7 @@ function drawBackground() {
         ctx.stroke();
     }
     
-    // Draw grass base with extended height
+    // Draw grass base without gap
     drawGrassBase();
     
     // Draw improved trees
@@ -302,17 +302,16 @@ function drawBackground() {
     drawWater();
 }
 
-// Draw grass base - extended to reach below water level
+// Draw grass base
 function drawGrassBase() {
-    // Draw a solid grass layer from mountains to below water with no gap
-    const grassGradient = ctx.createLinearGradient(0, canvas.height * 0.5, 0, canvas.height * 0.75);
+    // Draw a solid grass layer from mountains to water with no gap
+    const grassGradient = ctx.createLinearGradient(0, canvas.height * 0.5, 0, canvas.height * 0.67);
     grassGradient.addColorStop(0, '#1A472A'); // Dark green at mountain border
-    grassGradient.addColorStop(0.5, '#2A603A'); // Middle green
-    grassGradient.addColorStop(1, '#1A472A'); // Back to dark green below water
+    grassGradient.addColorStop(1, '#2A603A'); // Slightly lighter green at water border
     
     ctx.fillStyle = grassGradient;
     ctx.beginPath();
-    ctx.rect(0, canvas.height * 0.5, canvas.width, canvas.height * 0.3); // Extended height
+    ctx.rect(0, canvas.height * 0.5, canvas.width, canvas.height * 0.17);
     ctx.fill();
 }
 
@@ -367,11 +366,11 @@ function drawWater() {
     // Update wave points
     for (let i = 0; i < wavePoints.length; i++) {
         wavePoints[i].angle += 0.02; // Slower wave movement
-        wavePoints[i].y = canvas.height * 0.65 + Math.sin(wavePoints[i].angle) * 5;
+        wavePoints[i].y = canvas.height * 0.67 + Math.sin(wavePoints[i].angle) * 5;
     }
     
     // Draw water with neon effect
-    const gradient = ctx.createLinearGradient(0, canvas.height * 0.65, 0, canvas.height);
+    const gradient = ctx.createLinearGradient(0, canvas.height * 0.67, 0, canvas.height);
     gradient.addColorStop(0, 'rgba(0, 120, 255, 0.7)');
     gradient.addColorStop(1, 'rgba(0, 50, 150, 0.7)');
     
@@ -403,4 +402,6 @@ function drawWater() {
     }
     ctx.stroke();
     ctx.shadowBlur = 0;
+    
+    // No more fast-moving reflections
 }
