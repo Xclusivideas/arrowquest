@@ -15,8 +15,9 @@ function initBackground() {
         });
     }
     
-    // Initialize clouds with improved shapes
+    // Initialize clouds with improved rounded shapes
     clouds = [];
+    const cloudColors = ['rgba(200, 200, 255, 0.7)', 'rgba(210, 210, 255, 0.7)', 'rgba(220, 220, 255, 0.7)'];
     for (let i = 0; i < 5; i++) {
         clouds.push({
             x: Math.random() * canvas.width,
@@ -24,20 +25,21 @@ function initBackground() {
             width: 70 + Math.random() * 60,
             height: 40 + Math.random() * 30,
             speed: 0.3 + Math.random() * 0.3,
+            color: cloudColors[Math.floor(Math.random() * cloudColors.length)], // Random cloud color
             fluffiness: 0.7 + Math.random() * 0.5 // Cloud fluffiness factor
         });
     }
     
     // Initialize mountains with smoother, more curved shapes
     mountains = [];
-    const mountainColors = ['#5D4A8C', '#6B5A9E', '#7056A0', '#8367B3']; // Different blue-purple shades
+    const mountainColors = ['#5D4A8C', '#6B5A9E', '#7A68B2', '#8367B3']; // Different blue-purple shades
     for (let i = 0; i < 3; i++) {
         mountains.push({
             x: i * canvas.width/3 + (Math.random() * 100 - 50),
             y: canvas.height * 0.5,
             width: 200 + Math.random() * 120,
             height: 120 + Math.random() * 100,
-            color: mountainColors[i % mountainColors.length], // Use a different color for each mountain
+            color: mountainColors[Math.floor(Math.random() * mountainColors.length)], // Use a different color for each mountain
             speed: 0.3,
             controlPoints: generateMountainControlPoints()
         });
@@ -45,6 +47,7 @@ function initBackground() {
     
     // Initialize trees with better tree shapes
     trees = [];
+    const treeColors = ['#228B22', '#1D7A1D', '#25A025', '#2D8E2D'];
     for (let i = 0; i < 15; i++) {
         trees.push({
             x: Math.random() * canvas.width,
@@ -53,7 +56,8 @@ function initBackground() {
             trunkWidth: 8 + Math.random() * 6,
             foliageLayers: 2 + Math.floor(Math.random() * 3),
             foliageSize: 30 + Math.random() * 20,
-            speed: 0.7
+            speed: 0.7,
+            color: treeColors[Math.floor(Math.random() * treeColors.length)] // Random tree color
         });
     }
     
@@ -62,7 +66,7 @@ function initBackground() {
     for (let i = 0; i < 40; i++) {
         grassPatches.push({
             x: Math.random() * canvas.width,
-            y: canvas.height * 0.6 + Math.random() * (canvas.height * 0.1),
+            y: canvas.height * 0.5 + Math.random() * (canvas.height * 0.1),
             width: 20 + Math.random() * 30,
             height: 10 + Math.random() * 15,
             bladeCount: 3 + Math.floor(Math.random() * 5),
@@ -72,13 +76,13 @@ function initBackground() {
         });
     }
     
-    // Initialize wave points - moved up to connect with grass
+    // Initialize wave points - moved closer to grass
     wavePoints = [];
     const numPoints = 20;
     for (let i = 0; i <= numPoints; i++) {
         wavePoints.push({
             x: (canvas.width / numPoints) * i,
-            y: canvas.height * 0.7, // Moved up to connect with grass
+            y: canvas.height * 0.67, // Moved up to connect with grass better
             angle: Math.random() * Math.PI * 2
         });
     }
@@ -128,7 +132,7 @@ function drawBackground() {
         ctx.fill();
     }
     
-    // Draw improved clouds
+    // Draw improved clouds - using circles for a smoother look, no triangles
     for (let cloud of clouds) {
         // Update cloud position
         cloud.x -= cloud.speed * landscapeSpeed;
@@ -138,27 +142,32 @@ function drawBackground() {
             cloud.width = 70 + Math.random() * 60;
             cloud.height = 40 + Math.random() * 30;
             cloud.fluffiness = 0.7 + Math.random() * 0.5;
+            // Random cloud color from array
+            const cloudColors = ['rgba(200, 200, 255, 0.7)', 'rgba(210, 210, 255, 0.7)', 'rgba(220, 220, 255, 0.7)'];
+            cloud.color = cloudColors[Math.floor(Math.random() * cloudColors.length)];
         }
         
-        // Draw improved cloud with multiple puffs
-        ctx.fillStyle = 'rgba(200, 200, 255, 0.7)';
+        // Draw cloud with multiple circles for a fluffy look
+        ctx.fillStyle = cloud.color;
         ctx.shadowColor = '#ffffff';
         ctx.shadowBlur = 15;
         
-        // Main cloud body - more rounded and puffy
-        ctx.beginPath();
-        ctx.arc(cloud.x + cloud.width * 0.3, cloud.y + cloud.height * 0.5, 
-               cloud.height * 0.6, 0, Math.PI * 2);
-        ctx.arc(cloud.x + cloud.width * 0.7, cloud.y + cloud.height * 0.5, 
-               cloud.height * 0.7, 0, Math.PI * 2);
-        ctx.arc(cloud.x + cloud.width * 0.5, cloud.y + cloud.height * 0.3, 
-               cloud.height * 0.6, 0, Math.PI * 2);
-        ctx.fill();
+        // Main cloud body - only use circles for a smoother look
+        const numPuffs = 5;
+        for (let i = 0; i < numPuffs; i++) {
+            const puffX = cloud.x + (cloud.width * (i / (numPuffs - 1)));
+            const puffY = cloud.y + (Math.sin(i * Math.PI / 2) * cloud.height * 0.3);
+            const puffSize = cloud.height * (0.5 + Math.sin(i * Math.PI / 2) * 0.3);
+            
+            ctx.beginPath();
+            ctx.arc(puffX, puffY, puffSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
         
         ctx.shadowBlur = 0;
     }
     
-    // Draw improved mountains with smooth curves
+    // Draw improved mountains with bezier curves
     for (let i = 0; i < mountains.length; i++) {
         let mountain = mountains[i];
         // Update mountain position
@@ -168,7 +177,8 @@ function drawBackground() {
             mountain.width = 200 + Math.random() * 120;
             mountain.height = 120 + Math.random() * 100;
             // Use a different color from the array
-            mountain.color = ['#5D4A8C', '#6B5A9E', '#7056A0', '#8367B3'][Math.floor(Math.random() * 4)];
+            const mountainColors = ['#5D4A8C', '#6B5A9E', '#7A68B2', '#8367B3'];
+            mountain.color = mountainColors[Math.floor(Math.random() * mountainColors.length)];
             // Generate new control points
             mountain.controlPoints = generateMountainControlPoints();
         }
@@ -220,6 +230,9 @@ function drawBackground() {
             tree.trunkWidth = 8 + Math.random() * 6;
             tree.foliageLayers = 2 + Math.floor(Math.random() * 3);
             tree.foliageSize = 30 + Math.random() * 20;
+            // Random tree color
+            const treeColors = ['#228B22', '#1D7A1D', '#25A025', '#2D8E2D'];
+            tree.color = treeColors[Math.floor(Math.random() * treeColors.length)];
         }
         
         // Draw tree trunk with texture
@@ -242,8 +255,8 @@ function drawBackground() {
             ctx.stroke();
         }
         
-        // Draw foliage layers as triangles
-        ctx.fillStyle = '#228B22'; // Forest green
+        // Draw foliage using bezier curves for a more natural look
+        ctx.fillStyle = tree.color; // Use tree-specific color
         ctx.strokeStyle = '#00ff00'; // Neon green outline
         ctx.lineWidth = 1.5;
         ctx.shadowColor = '#00ff00';
@@ -253,11 +266,27 @@ function drawBackground() {
             const layerSize = tree.foliageSize * (1 - i * 0.15);
             const layerY = tree.y - tree.trunkHeight - i * (tree.foliageSize * 0.4);
             
+            // Draw a rounded pine tree shape using bezier curves
             ctx.beginPath();
-            // Draw a triangle for each foliage layer
-            ctx.moveTo(tree.x - layerSize/2, layerY);
-            ctx.lineTo(tree.x, layerY - layerSize);
-            ctx.lineTo(tree.x + layerSize/2, layerY);
+            ctx.moveTo(tree.x, layerY - layerSize); // Top point
+            
+            // Right side curve
+            ctx.bezierCurveTo(
+                tree.x + layerSize * 0.3, layerY - layerSize * 0.7, // Control point 1
+                tree.x + layerSize * 0.5, layerY - layerSize * 0.3, // Control point 2
+                tree.x + layerSize * 0.5, layerY // Bottom right
+            );
+            
+            // Bottom line
+            ctx.lineTo(tree.x - layerSize * 0.5, layerY);
+            
+            // Left side curve
+            ctx.bezierCurveTo(
+                tree.x - layerSize * 0.5, layerY - layerSize * 0.3, // Control point 1
+                tree.x - layerSize * 0.3, layerY - layerSize * 0.7, // Control point 2
+                tree.x, layerY - layerSize // Back to top
+            );
+            
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
@@ -276,13 +305,13 @@ function drawBackground() {
 // Draw grass base
 function drawGrassBase() {
     // Draw a solid grass layer from mountains to water with no gap
-    const grassGradient = ctx.createLinearGradient(0, canvas.height * 0.5, 0, canvas.height * 0.7);
+    const grassGradient = ctx.createLinearGradient(0, canvas.height * 0.5, 0, canvas.height * 0.67);
     grassGradient.addColorStop(0, '#1A472A'); // Dark green at mountain border
     grassGradient.addColorStop(1, '#2A603A'); // Slightly lighter green at water border
     
     ctx.fillStyle = grassGradient;
     ctx.beginPath();
-    ctx.rect(0, canvas.height * 0.5, canvas.width, canvas.height * 0.2);
+    ctx.rect(0, canvas.height * 0.5, canvas.width, canvas.height * 0.17);
     ctx.fill();
 }
 
@@ -294,7 +323,7 @@ function drawGrassDetails() {
         grass.x -= grass.speed * landscapeSpeed;
         if (grass.x + grass.width < 0) {
             grass.x = canvas.width + Math.random() * 30;
-            grass.y = canvas.height * 0.6 + Math.random() * (canvas.height * 0.08);
+            grass.y = canvas.height * 0.6 + Math.random() * (canvas.height * 0.05);
             grass.width = 20 + Math.random() * 30;
             grass.height = 10 + Math.random() * 15;
             grass.bladeCount = 3 + Math.floor(Math.random() * 5);
@@ -337,11 +366,11 @@ function drawWater() {
     // Update wave points
     for (let i = 0; i < wavePoints.length; i++) {
         wavePoints[i].angle += 0.02; // Slower wave movement
-        wavePoints[i].y = canvas.height * 0.7 + Math.sin(wavePoints[i].angle) * 5;
+        wavePoints[i].y = canvas.height * 0.67 + Math.sin(wavePoints[i].angle) * 5;
     }
     
     // Draw water with neon effect
-    const gradient = ctx.createLinearGradient(0, canvas.height * 0.7, 0, canvas.height);
+    const gradient = ctx.createLinearGradient(0, canvas.height * 0.67, 0, canvas.height);
     gradient.addColorStop(0, 'rgba(0, 120, 255, 0.7)');
     gradient.addColorStop(1, 'rgba(0, 50, 150, 0.7)');
     
@@ -374,15 +403,5 @@ function drawWater() {
     ctx.stroke();
     ctx.shadowBlur = 0;
     
-    // Draw water reflections (reduced - no fast moving objects)
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-    for (let i = 0; i < 5; i++) {
-        let x = Math.random() * canvas.width;
-        let y = canvas.height * 0.8 + Math.random() * (canvas.height * 0.15);
-        let size = 2 + Math.random() * 3;
-        
-        ctx.beginPath();
-        ctx.ellipse(x, y, size, size/2, 0, 0, Math.PI * 2);
-        ctx.fill();
-    }
+    // No more fast-moving reflections
 }

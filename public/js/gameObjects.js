@@ -6,16 +6,57 @@ function createArcher() {
         x: 50,
         y: canvas.height / 2,
         size: 40,
+        xSpeed: 0,
+        ySpeed: 0,
+        moveSpeed: 4,
         update: function() {
-            // Follow mouse Y position
-            this.y = mouseY;
-            if (this.y < this.size/2) this.y = this.size/2;
-            if (this.y > canvas.height - this.size/2) this.y = canvas.height - this.size/2;
+            // Update position based on keyboard input
+            if (archerCanMove) {
+                this.xSpeed = 0;
+                this.ySpeed = 0;
+                
+                if (keys.ArrowUp) {
+                    this.ySpeed = -this.moveSpeed;
+                }
+                if (keys.ArrowDown) {
+                    this.ySpeed = this.moveSpeed;
+                }
+                if (keys.ArrowLeft) {
+                    this.xSpeed = -this.moveSpeed;
+                    archerDirection = 'left';
+                }
+                if (keys.ArrowRight) {
+                    this.xSpeed = this.moveSpeed;
+                    archerDirection = 'right';
+                }
+                
+                // Move the archer
+                this.x += this.xSpeed;
+                this.y += this.ySpeed;
+                
+                // Constrain archer to boundaries
+                if (this.x < this.size) this.x = this.size;
+                if (this.x > canvas.width - this.size) this.x = canvas.width - this.size;
+                if (this.y < this.size/2) this.y = this.size/2;
+                if (this.y > canvas.height - this.size/2) this.y = canvas.height - this.size/2;
+            }
+            
+            // Still track mouse for aiming vertical shots
+            if (archerDirection === 'right') {
+                this.aimY = mouseY;
+                if (this.aimY < this.size/2) this.aimY = this.size/2;
+                if (this.aimY > canvas.height - this.size/2) this.aimY = canvas.height - this.size/2;
+            }
         },
         draw: function() {
             // Draw cartoon archer body
             ctx.save();
             ctx.translate(this.x, this.y);
+            
+            // Flip horizontally if facing left
+            if (archerDirection === 'left') {
+                ctx.scale(-1, 1);
+            }
             
             // Draw body
             ctx.fillStyle = '#8B4513'; // Brown
@@ -81,18 +122,27 @@ function createArrow(x, y) {
         y: y,
         width: 40,
         height: 5,
-        speed: 10,
+        speed: archerDirection === 'right' ? 10 : -10, // Direction based on archer
         fruits: [],
         update: function() {
             this.x += this.speed;
             
             // Update attached fruits
             for (let fruit of this.fruits) {
-                fruit.x = this.x + 5; // Offset slightly to prevent stacking
+                fruit.x = this.x + (this.speed > 0 ? 5 : -5); // Offset based on direction
                 fruit.y = this.y;
             }
         },
         draw: function() {
+            ctx.save();
+            
+            // Flip arrow if going left
+            if (this.speed < 0) {
+                ctx.translate(this.x, this.y);
+                ctx.scale(-1, 1);
+                ctx.translate(-this.x, -this.y);
+            }
+            
             // Draw arrow shaft with neon effect
             ctx.strokeStyle = '#ffcc00'; // Yellow
             ctx.shadowColor = '#ffcc00';
@@ -131,6 +181,8 @@ function createArrow(x, y) {
                 ctx.lineTo(this.x - this.width/2, this.y);
                 ctx.stroke();
             }
+            
+            ctx.restore();
         }
     };
 }

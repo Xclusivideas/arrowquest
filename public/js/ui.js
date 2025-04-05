@@ -186,8 +186,11 @@ function setupPlayerForm() {
 
 // Initialize UI
 function initUI() {
-    // Setup difficulty slider
-    document.getElementById('difficulty').addEventListener('input', updateDifficulty);
+    // Setup difficulty slider - changed max to 9
+    const difficultySlider = document.getElementById('difficulty');
+    difficultySlider.max = "9";
+    difficultySlider.value = "1";
+    difficultySlider.addEventListener('input', updateDifficulty);
     
     // Setup restart button
     document.getElementById('restart-button').addEventListener('click', () => {

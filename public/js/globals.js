@@ -15,7 +15,7 @@ function resizeCanvas() {
     document.getElementById('apples-display').style.height = canvas.height + 'px';
     
     // Reinitialize game if it was already started
-    if (gameStarted && !gameOver) {
+    if (gameStarted) {
         initGame();
     }
 }
@@ -43,6 +43,8 @@ let timerInterval = null;
 let gameStarted = false;
 let playerName = '';
 let bombExplosionInProgress = false;
+let archerCanMove = true; // Allow archer to move around
+let archerDirection = 'right'; // Default direction
 
 // Game objects
 let archer = null;
@@ -64,6 +66,14 @@ let grassPatches = [];
 let mouseX = 0;
 let mouseY = canvas.height / 2;
 
+// Keyboard controls
+let keys = {
+    ArrowUp: false,
+    ArrowDown: false,
+    ArrowLeft: false,
+    ArrowRight: false
+};
+
 // Debug variables
 let fpsValues = [];
 let lastFrameTime = 0;
@@ -75,3 +85,6 @@ let gameLoopRunning = false;
 
 // Initialize leaderboard array
 let leaderboard = [];
+
+// For title animation
+let titleAngle = 0;

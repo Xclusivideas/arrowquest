@@ -19,6 +19,15 @@ function initGame() {
         particles = [];
         scorePopups = [];
         spearApples = [];
+        archerDirection = 'right';
+        
+        // Reset key states
+        keys = {
+            ArrowUp: false,
+            ArrowDown: false,
+            ArrowLeft: false,
+            ArrowRight: false
+        };
         
         // Create archer
         archer = createArcher();
@@ -31,6 +40,7 @@ function initGame() {
         updateArrowsDisplay();
         updateApplesDisplay();
         updateTimeDisplay();
+        animateTitle();
         
         // Start game timer
         startGameTimer();
@@ -176,6 +186,24 @@ function updateGame(deltaTime) {
             scorePopups.splice(i, 1);
         }
     }
+    
+    // Animate title
+    animateTitle();
+}
+
+// Animate the game title
+function animateTitle() {
+    titleAngle += 0.03;
+    
+    const titleElement = document.querySelector('h1');
+    if (titleElement) {
+        const glowAmount = 5 + Math.sin(titleAngle) * 5;
+        const scaleAmount = 1 + Math.sin(titleAngle) * 0.03;
+        
+        titleElement.style.textShadow = `0 0 ${glowAmount}px #00ffff`;
+        titleElement.style.transform = `scale(${scaleAmount})`;
+        titleElement.style.transition = 'text-shadow 0.3s ease-in-out, transform 0.3s ease-in-out';
+    }
 }
 
 // Event listeners
@@ -190,7 +218,9 @@ window.addEventListener('DOMContentLoaded', () => {
     // Click to shoot
     canvas.addEventListener('click', function() {
         if (!gameOver && !bombExplosionInProgress && arrowsLeft > 0) {
-            arrows.push(createArrow(archer.x + 30, archer.y));
+            // Arrow spawns at archer's position and flies in the direction the archer is facing
+            const arrowX = archerDirection === 'right' ? archer.x + 30 : archer.x - 30;
+            arrows.push(createArrow(arrowX, archer.y));
             arrowsLeft--;
             updateArrowsDisplay();
             
@@ -218,7 +248,8 @@ window.addEventListener('DOMContentLoaded', () => {
             mouseX = touch.clientX - rect.left;
             mouseY = touch.clientY - rect.top;
             
-            arrows.push(createArrow(archer.x + 30, archer.y));
+            const arrowX = archerDirection === 'right' ? archer.x + 30 : archer.x - 30;
+            arrows.push(createArrow(arrowX, archer.y));
             arrowsLeft--;
             updateArrowsDisplay();
             
@@ -226,6 +257,20 @@ window.addEventListener('DOMContentLoaded', () => {
             if (arrowsLeft === 0) {
                 setTimeout(endGame, 2000); // Give time for last arrow to potentially hit
             }
+        }
+    });
+    
+    // Keyboard controls
+    window.addEventListener('keydown', function(e) {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            keys[e.key] = true;
+            e.preventDefault(); // Prevent scrolling
+        }
+    });
+    
+    window.addEventListener('keyup', function(e) {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            keys[e.key] = false;
         }
     });
     
