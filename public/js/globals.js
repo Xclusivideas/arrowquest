@@ -25,13 +25,25 @@ function resizeCanvas() {
     }
 }
 
-// Set initial size immediately on script load
+// Improved initialization to ensure container is fully rendered
+function initializeCanvasSize() {
+    // First attempt at initialization
+    resizeCanvas();
+    
+    // Additional check after a longer delay to ensure container has proper dimensions
+    setTimeout(() => {
+        resizeCanvas();
+        
+        // Force another resize after a longer delay
+        setTimeout(resizeCanvas, 300);
+    }, 100);
+}
+
+// Set initial size with improved approach
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(resizeCanvas, 0); // Ensure this runs after DOM is fully loaded
-    });
+    document.addEventListener('DOMContentLoaded', initializeCanvasSize);
 } else {
-    setTimeout(resizeCanvas, 0); // DOM already loaded, resize immediately
+    initializeCanvasSize();
 }
 
 // And resize again on window load and resize
