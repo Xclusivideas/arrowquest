@@ -85,7 +85,7 @@ let keys = {
     ArrowDown: false,
     ArrowLeft: false,
     ArrowRight: false,
-    Enter: false // Add Enter key
+    Enter: false
 };
 
 // Debug variables

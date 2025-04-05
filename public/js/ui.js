@@ -222,3 +222,11 @@ function initUI() {
     // Setup player form
     setupPlayerForm();
 }
+
+// Call setupInstructionsModal immediately after DOM is loaded
+// to ensure info button works right away without waiting for game start
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupInstructionsModal);
+} else {
+    setupInstructionsModal();
+}

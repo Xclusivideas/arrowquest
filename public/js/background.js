@@ -14,16 +14,20 @@ function initBackground() {
         });
     }
     
-    // Initialize clouds with improved rounded shapes
+    // Initialize clouds with improved rounded shapes and vertical movement
     clouds = [];
     const cloudColors = ['rgba(200, 200, 255, 0.7)', 'rgba(210, 210, 255, 0.7)', 'rgba(220, 220, 255, 0.7)'];
     for (let i = 0; i < 5; i++) {
         clouds.push({
             x: Math.random() * canvas.width,
-            y: 50 + Math.random() * 100,
+            y: 30 + Math.random() * 120, // Different heights
+            baseY: 30 + Math.random() * 120, // Store the base Y position
             width: 70 + Math.random() * 60,
             height: 40 + Math.random() * 30,
             speed: 0.3 + Math.random() * 0.3,
+            verticalSpeed: 0.2 + Math.random() * 0.2, // Speed for up/down movement
+            verticalDirection: Math.random() > 0.5 ? 1 : -1, // Random initial direction
+            verticalRange: 10 + Math.random() * 15, // Range of vertical movement
             color: cloudColors[Math.floor(Math.random() * cloudColors.length)], // Random cloud color
             fluffiness: 0.7 + Math.random() * 0.5 // Cloud fluffiness factor
         });
@@ -131,15 +135,30 @@ function drawBackground() {
         ctx.fill();
     }
     
-    // Draw improved clouds - using circles for a smoother look, no triangles
+    // Draw improved clouds - using circles for a smoother look with vertical movement
     for (let cloud of clouds) {
-        // Update cloud position
+        // Update cloud horizontal position
         cloud.x -= cloud.speed * landscapeSpeed;
+        
+        // Update cloud vertical position with oscillation
+        cloud.y += cloud.verticalSpeed * cloud.verticalDirection;
+        const verticalDistance = Math.abs(cloud.y - cloud.baseY);
+        
+        // Reverse direction when reaching the range limit
+        if (verticalDistance > cloud.verticalRange) {
+            cloud.verticalDirection *= -1;
+        }
+        
+        // Reset cloud when it moves off-screen
         if (cloud.x + cloud.width < 0) {
             cloud.x = canvas.width + Math.random() * 50;
-            cloud.y = 50 + Math.random() * 100;
+            cloud.baseY = 30 + Math.random() * 120; // Different heights
+            cloud.y = cloud.baseY;
             cloud.width = 70 + Math.random() * 60;
             cloud.height = 40 + Math.random() * 30;
+            cloud.verticalSpeed = 0.2 + Math.random() * 0.2;
+            cloud.verticalDirection = Math.random() > 0.5 ? 1 : -1;
+            cloud.verticalRange = 10 + Math.random() * 15;
             cloud.fluffiness = 0.7 + Math.random() * 0.5;
             // Random cloud color from array
             const cloudColors = ['rgba(200, 200, 255, 0.7)', 'rgba(210, 210, 255, 0.7)', 'rgba(220, 220, 255, 0.7)'];
