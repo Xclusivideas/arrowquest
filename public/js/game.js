@@ -40,7 +40,9 @@ function initGame() {
         updateArrowsDisplay();
         updateApplesDisplay();
         updateTimeDisplay();
-        animateTitle();
+        
+        // Initialize title character offsets for animation
+        initTitleAnimation();
         
         // Start game timer
         startGameTimer();
@@ -62,6 +64,34 @@ function initGame() {
     } catch (e) {
         console.error("Initialization error:", e);
         updateDebugPanel(`Init error: ${e.message}`);
+    }
+}
+
+// Initialize title animation
+function initTitleAnimation() {
+    // Get the title text
+    const titleElement = document.querySelector('h1');
+    if (!titleElement) return;
+    
+    const titleText = titleElement.textContent || "Arrow Quest";
+    
+    // Clear previous content
+    titleElement.innerHTML = '';
+    titleCharacterOffsets = [];
+    
+    // Create spans for each character with individual animation
+    for (let i = 0; i < titleText.length; i++) {
+        const span = document.createElement('span');
+        span.textContent = titleText[i];
+        span.style.display = 'inline-block';
+        span.style.position = 'relative';
+        titleElement.appendChild(span);
+        
+        // Initialize with random offset phase
+        titleCharacterOffsets.push({
+            phase: Math.random() * Math.PI * 2,
+            speed: 0.05 + Math.random() * 0.03
+        });
     }
 }
 
@@ -134,6 +164,9 @@ function gameLoop(timestamp) {
             removeOffscreenObjects();
         }
         
+        // Animate title
+        animateTitle();
+        
         // Request next frame with error handling
         gameLoopRunning = true;
         requestAnimationFrame(gameLoop);
@@ -186,9 +219,6 @@ function updateGame(deltaTime) {
             scorePopups.splice(i, 1);
         }
     }
-    
-    // Animate title
-    animateTitle();
 }
 
 // Animate the game title
@@ -196,13 +226,32 @@ function animateTitle() {
     titleAngle += 0.03;
     
     const titleElement = document.querySelector('h1');
-    if (titleElement) {
-        const glowAmount = 5 + Math.sin(titleAngle) * 5;
-        const scaleAmount = 1 + Math.sin(titleAngle) * 0.03;
+    if (!titleElement) return;
+    
+    // Get all character spans
+    const chars = titleElement.querySelectorAll('span');
+    if (chars.length === 0) {
+        initTitleAnimation();
+        return;
+    }
+    
+    // Animate each character individually
+    for (let i = 0; i < chars.length; i++) {
+        if (i >= titleCharacterOffsets.length) continue;
         
-        titleElement.style.textShadow = `0 0 ${glowAmount}px #00ffff`;
-        titleElement.style.transform = `scale(${scaleAmount})`;
-        titleElement.style.transition = 'text-shadow 0.3s ease-in-out, transform 0.3s ease-in-out';
+        // Update phase for this character
+        titleCharacterOffsets[i].phase += titleCharacterOffsets[i].speed;
+        
+        // Calculate vertical position
+        const yOffset = Math.sin(titleCharacterOffsets[i].phase) * 5;
+        
+        // Apply transform with vertical offset
+        chars[i].style.transform = `translateY(${yOffset}px)`;
+        chars[i].style.transition = 'transform 0.1s ease-in-out';
+        
+        // Add glow effect
+        const glowAmount = 5 + Math.sin(titleAngle + i * 0.3) * 5;
+        chars[i].style.textShadow = `0 0 ${glowAmount}px #00ffff`;
     }
 }
 
