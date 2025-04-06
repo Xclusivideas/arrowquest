@@ -27,16 +27,16 @@ function resizeCanvas() {
 
 // Improved initialization to ensure container is fully rendered
 function initializeCanvasSize() {
-    // Set initial size to make archer about 10% of canvas height
-    const initialWidth = Math.min(1600, window.innerWidth - 100);
-    canvas.width = initialWidth;
-    canvas.height = initialWidth * 0.75;
-    
-    // Then do the more precise resize
-    setTimeout(resizeCanvas, 50);
+    // First attempt at initialization
+    resizeCanvas();
     
     // Additional check after a longer delay to ensure container has proper dimensions
-    setTimeout(resizeCanvas, 300);
+    setTimeout(() => {
+        resizeCanvas();
+        
+        // Force another resize after a longer delay
+        setTimeout(resizeCanvas, 300);
+    }, 100);
 }
 
 // Set initial size with improved approach
@@ -70,7 +70,6 @@ let playerName = '';
 let bombExplosionInProgress = false;
 let archerCanMove = true; // Allow archer to move around
 let archerDirection = 'right'; // Default direction
-let dayCycleProgress = 0; // 0 = night, 1 = day (for sky transition)
 
 // Game objects
 let archer = null;
