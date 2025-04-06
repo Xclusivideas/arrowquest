@@ -22,17 +22,27 @@ function updateTimeDisplay() {
     }
 }
 
-// Update arrows display
+// Update arrows display on both sides of the screen
 function updateArrowsDisplay() {
-    // Clear previous arrows
+    // Clear previous arrows on left
     const arrowsDisplay = document.getElementById('arrows-display');
     arrowsDisplay.innerHTML = '';
     
-    // Add visual representation of arrows left
+    // Clear previous arrows on right (duplicate display)
+    const arrowsDisplayRight = document.getElementById('arrows-display-right');
+    arrowsDisplayRight.innerHTML = '';
+    
+    // Add visual representation of arrows left - on both sides
     for (let i = 0; i < arrowsLeft; i++) {
+        // Left side
         const arrowIcon = document.createElement('div');
         arrowIcon.className = 'arrow-icon';
         arrowsDisplay.appendChild(arrowIcon);
+        
+        // Right side
+        const arrowIconRight = document.createElement('div');
+        arrowIconRight.className = 'arrow-icon';
+        arrowsDisplayRight.appendChild(arrowIconRight);
     }
 }
 
